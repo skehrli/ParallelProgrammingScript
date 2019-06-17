@@ -19,6 +19,10 @@ bottom=2cm,%
 \usepackage{subfiles}
 \usepackage{wrapfig}
 \usepackage{multicol}
+\usepackage{transparent}
+
+%setting margins
+\usepackage[a4paper, total={16cm, 24cm}]{geometry}
 
 \graphicspath{ {./images/} }
 
@@ -86,22 +90,28 @@ bottom=2cm,%
     \setlength{\QuestionIndent}{2em}
     
     \makeatletter 
-    \begin{titlepage}
-        \begin{center}
-            \includegraphics[width=0.7\linewidth]{spirale_black1000x1000.png}\\[4ex]
-            \huge \textbf{\@title} \\[2ex] 
-            \Large \textbf{Last updated on 15.06.2019} \\[2ex]
-            \large written by \@author\\[2ex] 
-            \large pprog-pvw-skript@vis.ethz.ch \\[50ex]
-        \end{center}
-    \end{titlepage}
+        \begin{titlepage}
+		\begin{center}
+		\huge \textbf{Parallel Programming \\ PVW Script}
+		\\ \bigskip
+		\Large Last Updated: June, 2019
+		\\ \bigskip
+		\large Author: Lasse Meinen
+		\\ \bigskip
+		\Large pprog-pvw-skript@vis.ethz.ch
+		\vfill
+		{\transparent{0.1}\includegraphics[width = 0.6\textwidth]{images/spirale_black1000x1000.png}}
+		\vfill
+		\end{center}
+
+		\noindent \textbf{Disclaimer:}\\
+		This  script only serves as additional material for practice purposes and should not serve as a substitute for the lecture material. We neither guarantee that this script covers all relevant topics for the exam, not that it correct. If an attentive reader finds any mistakes or has any suggestions on how to improve the scrips, they are encouraged to contact the authors under the
+		indicated email address or, preferably, through a gitlab issue on https://gitlab.ethz.ch/vis/luk/pvw\_script\_pprog.
+	\end{titlepage}
     \makeatother
     \thispagestyle{empty}
     \newpage
 
-    \subfile{Disclaimer}
-    \newpage
-    
     \setcounter{page}{1} %Start the actually document on page 1
     
     \tableofcontents
