@@ -451,13 +451,14 @@ Over the years it has become evident that improving sequential processor perform
         \end{figure}
     
     \Exercise[title={Pipelining},label=pipe].\quad Over at UZH the law students have been tasked with writing a legal essay about the philosophy of Swiss law. In order to write the essay, a student first needs to inform themselves about the subject. To do so, they must read from four different books, each of which contains information necessary to understand the next book. \\[3mm]
-    Every student takes the exact same amount of time to read a book, namely:
+    Every student takes the exact same amount of time to read a book, and can only read the books in the specified order:
     \begin{enumerate}[label=\arabic*)]
         \item\ Reading book A takes 80 minutes
         \item\ Reading book B takes 40 minutes
         \item\ Reading book C takes 120 minutes
         \item\ Reading book D takes 40 minutes
-    \end{enumerate}
+    \end{enumerate}\\
+    Unfortunately, the library only has a single copy of each book.
         \Question Let's assume all law students are a bit too competitive and don't return any books before they're done reading all of them. How long will it take for 4 students until all of them have started writing their essays?
         \Question The library introduces a ''one book at a time'' policy, i.e. the students have to return a book before they can start on the next one. How long will it now take for 4 students until all of them have started writing their essays? What is the throughput of this ''pipeline'' per hour? What is the latency?
         \Question Where is the problem with this system? What can the library do to solve this problem?
