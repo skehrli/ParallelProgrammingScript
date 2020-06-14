@@ -28,7 +28,7 @@ Naively, we might expect the speedup of our program to always be $S_P = P$, i.e.
 %==============================================================================================================================
 
 \subsubsection{Amdahl's Law}
-We noted in the previous section that the speedup of a given parallel program can be greatly decreased due to overhead caused by several issues introduced by parallelizing the program. In fact, any sequential parts of a program can drastically impact the maximum achievable speedup. We will derive Amdahl's law here to see why this is the case.\\
+We noted in the previous section that the speedup of a given parallel program can be greatly decreased due to overhead caused by several issues introduced by parallelizing the program; in fact, any sequential part of a program can drastically impact the maximum achievable speedup. We will derive Amdahl's law here to see why this is the case.\\
 \\
 Let $W_{ser}$ denote the time spent doing non-parallelizable, serial work and $W_{par}$ denote the time spent doing parallelizable work.\\
 We then write:
@@ -305,13 +305,13 @@ Upon submitting a task a \texttt{Future$<$T$>$} is created, which contains the r
     \end{figure}
     \noindent You should see that the program never terminates. The reason for this is that the \texttt{ExecutorService} limits the number of threads that can be spawned. Once all threads are occupied by tasks waiting for the result of spawned subtasks, execution is therefore halted. No threads are available to run the subtasks on, i.e. the subtasks will wait indefinitely.
 \end{example}
-With the \texttt{ExecutorService} the limited thread pool size caused the program to run forever, as all currently active threads were occupied by tasks waiting for the spawned subtasks to return. While there are possible approaches that could alleviate this problem, e.g. seperating the work partitioning from solving the sub-tasks, they are all non-trivial to implement and are therefore not well suited for use in practice.
+With the \texttt{ExecutorService} the limited thread pool size caused the program to run forever, as all currently active threads were occupied by tasks waiting for the spawned subtasks to return. While there are possible approaches that could alleviate this problem, e.g. separating the work partitioning from solving the sub-tasks, they are all non-trivial to implement and are therefore not well suited for use in practice.
 
 %==============================================================================================================================
 
 \subsubsection{Fork/Join Framework}
 We continue our search for a library well-suited to implementing divide \& conquer algorithms. The \texttt{java.util.concurrent} package includes classes designed exactly for this type of fork-join parallelism.\\
-Compared to Java threads, the usage of these classes is exactly the same, but with some different names and interfaces. First, we'll introduce the required terminology. Second, we'll have a look at the generic recipe for implementing fork-join parallelism.\\
+Compared to Java threads, the usage of these classes is identical, but with some different names and interfaces. First, we'll introduce the required terminology. Second, we'll have a look at the generic recipe for implementing fork-join parallelism.\\
 \\
 We use the library as follows:
 \begin{itemize}
@@ -384,7 +384,7 @@ When designing a pipeline, it's of course always our aim to increase throughput 
     \end{tabular} \\[3mm]
     We see that our new throughput is 1 load per 10 seconds. Latency, however, seems to be increasing, i.e. the pipeline is now unbalanced. 
 \end{example}
-\noindent This example illustrated one important problem that can occur in pipelines. Despite achieving a high throughput, the latency increased indefinitely.
+\noindent This example illustrated one important problem that can occur in pipelines. Despite achieving high throughput, the latency increased indefinitely.
 Over the years it has become evident that improving sequential processor performance with methods such as these is not enough. This has led to the development of parallel architectures such as multicore processors and processors implementing simultaneous multithreading as we know them today.
 
 \pagebreak
@@ -450,8 +450,8 @@ Over the years it has become evident that improving sequential processor perform
             \includegraphics[scale=0.55]{MaxSubArraySumForkJoin_Sol.png}
         \end{figure}
     
-    \Exercise[title={Pipelining},label=pipe].\quad Over at UZH the law students have been tasked with writing a legal essay about the philosophy of Swiss law. In order to write the essay, a student first needs to inform themselves about the subject. To do so, they must read from four different books, each of which contains information necessary to understand the next book. \\[3mm]
-    Every student takes the exact same amount of time to read a book, and can only read the books in the specified order:
+    \Exercise[title={Pipelining},label=pipe].\quad Over at UZH, the law students have been tasked with writing a legal essay about the philosophy of Swiss law. To write the essay, a student first needs to inform themselves about the subject. To do so, they must read from four different books, each of which contains some information necessary to understand the next book. \\[3mm]
+    Every student takes the same amount of time to read a book, and can only read the books in the specified order:
     \begin{enumerate}[label=\arabic*)]
         \item\ Reading book A takes 80 minutes
         \item\ Reading book B takes 40 minutes
@@ -463,7 +463,7 @@ Over the years it has become evident that improving sequential processor perform
         \Question The library introduces a ''one book at a time'' policy, i.e. the students have to return a book before they can start on the next one. How long will it now take for 4 students until all of them have started writing their essays? What is the throughput of this ''pipeline'' per hour? What is the latency?
         \Question Where is the problem with this system? What can the library do to solve this problem?
     \Answer[ref={pipe}].\\
-        \Question In the case of a sequential execution we simply need to add the execution times of the four stages together and multiply this by the number of students.
+        \Question In the case of sequential execution, we simply need to add the execution times of the four stages together and multiply this by the number of students.
             \begin{equation*}
                 (80 + 40 + 120 + 40) * 4 = 280 * 4  = 1120 \text{ minutes}
             \end{equation*}
