@@ -22,6 +22,19 @@ bottom=2cm,%
 \usepackage{multicol}
 \usepackage{transparent}
 
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
+\urlstyle{same}
+
 \graphicspath{ {./images/} }
 
 % custom commands
@@ -32,11 +45,7 @@ bottom=2cm,%
      #1
      \\
     }
-
-
-\usepackage[utf8]{inputenc}
-\usepackage[german]{babel}
-
+    
 % Theoreme etc.
 \theoremstyle{plain}
 \newmdtheoremenv[
