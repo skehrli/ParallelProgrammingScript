@@ -397,14 +397,14 @@ Over the years it has become evident that improving sequential processor perform
 \begin{ExerciseList}
     \Exercise[title={Amdahl's Law, Gustafson's Law, Performance},label=AGL].
         \Question Suppose a computer program has a method \textbf{M} that cannot be parallelized, and that this method accounts for 40\% of the program’s execution time. What is the limit for the overall speedup that can be achieved by running the program on an n-processor multiprocessor machine according to \nameref{Amdahl's Law}?
-        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \nameref{Amdahl's Law} (assuming best possible speedup)?
+        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to Amdahl's Law (assuming best possible speedup)?
         \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \nameref{Gustafson's Law}?
     \Answer[ref={AGL}].
-        \Question We see that the program has a serial fraction of 40\%. Therefore, we set $\mathbf{f} = 0.4$ and insert this into the formula specified by \nameref{Amdahl's Law}:
+        \Question We see that the program has a serial fraction of 40\%. Therefore, we set $\mathbf{f} = 0.4$ and insert this into the formula specified by Amdahl's Law:
             \begin{equation*}
                 S_P \leq \frac{1}{\mathbf{f} + \frac{1-\mathbf{f}}{P}} = \frac{1}{0.4 + \frac{0.6}{P}} \xrightarrow{P \rightarrow \infty} \frac{1}{0.4} = 2.5
             \end{equation*}
-        \Question Assuming best possible speedup, \nameref{Amdahl's Law} tells us the following holds true
+        \Question Assuming best possible speedup, Amdahl's Law tells us the following holds true
             \begin{gather*}
                 S_P = 5 = \frac{1}{\mathbf{f}+\frac{1-\mathbf{f}}{P}} = \frac{1}{\mathbf{f}+\frac{1-\mathbf{f}}{15}} \\
                 \Longleftrightarrow\\
@@ -412,7 +412,7 @@ Over the years it has become evident that improving sequential processor perform
                 \Longleftrightarrow\\
                 \mathbf{f} = \frac{1}{7}
             \end{gather*}
-        \Question \nameref{Gustafson's Law} tells us the following holds true
+        \Question Gustafson's Law tells us the following holds true
             \begin{gather*}
                 S_P = \mathbf{f} + P (1 - \mathbf{f})
                     = \mathbf{f} + 15 (1 - \mathbf{f})
