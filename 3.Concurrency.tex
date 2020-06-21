@@ -22,7 +22,7 @@ In practice, programmers usually over-synchronize their programs. When writing a
 If a programmer isn't able to make a memory location thread-local or immutable, they must ensure that no bad interleavings or data races occur by implementing \textbf{mutual exclusion}. This is done by defining critical sections, i.e. sections of code which only thread at a time is allowed to execute.\\[3mm]
 We will now first define progress-conditions and use these to explain the requirements for the correct implementation of a critical section. We will then turn our attention to finite state diagrams, which will allow us to formally determine whether all these requirements hold. 
 
-\subsubsection{Progress Conditions}
+\subsubsection{Progress Conditions} \label{progress conditions}
 When talking about concurrent algorithms, we distinguish between \textit{blocking} and \textit{non-blocking} algorithms.\\[3mm]
 As one might think, in blocking algorithms threads might occasionally go into a blocked state, e.g. when attempting to acquire a lock. Among blocking algorithms, we distinguish two further cases:
 \begin{itemize}
@@ -100,7 +100,7 @@ Using this state transition diagram, we can now easily recognize whether the cri
 We will now look at different ways of actually implementing mutual exclusion. We will first look at different algorithms, always considering their advantages and disadvantages, then their efficiency on modern multiprocessors and how to improve further. To understand how these implementations were constructed or what the concrete proofs of the characteristics look like, one should consult the lecture slides or Chapter 2 of the book ''The Art of Multiprocessor Programming'' by Herlihy and Shavit.\\[3mm]
 In the following, we assume all reads and writes are atomic. This assumption is necessary, as while we do add the \texttt{volatile} keyword to all array declarations, this only concerns the array references, not their entries. In practice, one would declare the arrays to be arrays of \texttt{AtomicInteger}s, i.e. as \texttt{AtomicIntegerArray}.
 
-\subsubsection{Peterson Lock}
+\subsubsection{Peterson Lock} \label{Peterson's Lock}
 We assume only two threads attempt to acquire the lock, one with \texttt{ThreadID == 0} and the other with \texttt{ThreadID == 1}. The idea of the algorithm is as follows:
 \begin{enumerate}
     \item Set our flag, thereby indicating that we're interested in entering the critical section.
@@ -117,7 +117,7 @@ An obvious disadvantage of this implementation is that it only implements mutual
 
 %==============================================================================================================================
 
-\subsubsection{Filter Lock}
+\subsubsection{Filter Lock} \label{Filter Lock}
 As mentioned in the previous section, the Filter Lock is a generalization of the Peterson Lock. In order to implement mutual exclusion for up to $n$ threads, we create $n-1$ ''levels'' that a thread must traverse (3) before entering the critical section. \\[3mm]
 We generalize the notion of a two-element \texttt{flag} array with an $n$-element \texttt{level} array (1), where the value of \texttt{level[T]} indicates the highest level thread $T$ is trying to enter. Each level $k$ has an entry \texttt{victim[$k$]} (2), indicating that the thread specified in this entry wants to enter the level.\\[3mm]
 Initially, a thread is at level 0. We say that $T$ is at level $k$ for $k>0$, when it completes the waiting loop (4) with $level[T]\geq k$. Note that this also means that a thread at level $k$ is also at level $k-1$ and so on. A thread can complete the waiting loop when another thread wants to enter its level or no more threads are in front of it.\\[3mm]
@@ -265,7 +265,7 @@ Note that both operations above should be considered to be atomic, to avoid data
 
 \subsubsection{Barriers}
 % Idea and how to implement
-We now want to go one step further. We wish to create a barrier which blocks all threads up until a certain threshold $N$. Once the threshold has been reached all threads are allowed to continue execution. We distinguish between non-reusable and reusable barriers. \\[3mm]
+We now want to go one step further. We wish to create a barrier which blocks all threads up until a certain threshold of $N$ threads. Once the threshold has been reached all threads waiting in the barrier are allowed to continue execution. We distinguish between non-reusable and reusable barriers. Note that in reusable barriers, we, next to correctly resetting the barrier to its initial state, have to deal with the issue that threads might attempt to re-enter the barrier while the other ones are still ''draining'' out.\\[3mm]
 
 \newpage
 
@@ -275,14 +275,14 @@ We now want to go one step further. We wish to create a barrier which blocks all
     \includegraphics[scale=0.45]{SimpleBarrier.png}
 \end{wrapfigure}
 \vspace{0pt}
-\noindent The non-reusable barrier has a relatively simple implementation, which can be seen in Fig. 1. Each arriving thread increments the counter (taking the lock to avoid race conditions) and attempts to acquire the \texttt{barrier} semaphore, thereby going into a blocked state. Once all threads have arrived, i.e. \texttt{count == threshold}, the \texttt{barrier} semaphore is set to 1, allowing one thread to pass. Whenever a thread passes the barrier it immediately releases it again so that the next thread may proceed with its execution. This method of acquiring and releasing the \texttt{barrier} semaphore is called a \textit{turnstyle}.\\[3mm]
+\noindent The non-reusable barrier has a relatively simple implementation, which can be seen in Fig. 1. Each arriving thread increments the counter (taking the lock to avoid race conditions) and attempts to acquire the \texttt{barrier} semaphore, thereby going into a blocked state. Once all threads have arrived, i.e. \texttt{count == threshold}, the \texttt{barrier} semaphore is set to 1, allowing one thread to pass. Whenever a thread passes the barrier it immediately releases it again so that the next thread may proceed with its execution. This method of acquiring and releasing the \texttt{barrier} semaphore is called a \textit{turnstile}.\\[3mm]
 
 
-\noindent The reusable barrier is implemented in such a way that it can be reused once all waiting threads are released, i.e. it assumes no additional threads call the \texttt{await()} method before all waiting threads have been released.\\
+\noindent The reusable barrier is implemented in such a way that it can be reused once all waiting threads are released. To simplify our implementation, we assume no additional threads call the \texttt{await()} method before all waiting threads have been released.\\
 The reusable barrier consists of two parts. First, the threads increment the counter, attempt to acquire the \texttt{barrier1} semaphore and go into a blocking state. Once the threshold is reached the \texttt{barrier1} semaphore is incremented so that the threads are allowed to pass the turnstile and enter the second part of the barrier. Additionally, the \texttt{barrier2} semaphore is decremented, thereby making the second part of the barrier behave identically to the first part, only now decreasing the counter. In the second part of the barrier, threads will be allowed to pass the turnstile once the counter's value is 0.\\
 Note that once all threads have exited the barrier, all values have been restored to their original state, thereby allowing the barrier to be reused again.\\[3mm]
-At this point, the reader is encouraged to think about why the different parts are necessary and what could go wrong if we changed anything about them. As an additional exercise, one should try to adapt the \texttt{CyclicBarrier} class such that it allows for later threads to start calling the \texttt{await()} method before all threads have exited the barrier.
-\begin{figure}[H] %this figure will be at the right
+At this point, the reader is encouraged to think about why the different parts are necessary and what could go wrong if we changed anything about them. As an additional exercise, one should try to adapt the \texttt{CyclicBarrier} class such that it allows for threads to start calling the \texttt{await()} method before all threads have exited the barrier.
+\begin{figure}[H]
     \centering
     \includegraphics[scale=0.45]{CyclicBarrier.png}
 \end{figure}
@@ -318,7 +318,7 @@ The disadvantage here is the considerable size of the critical section. As all t
 
 %==============================================================================================================================
 
-\subsubsection{Fine-Grained Locking}
+\subsubsection{Fine-Grained Locking} \label{fine-grained locking}
 As a first step of improving \textit{coarse-grained locking}, we can lock individual elements instead of the entire data structure. As a thread traverses the data structure, it locks each node when it first visits it and releases it once it has acquired the lock for the next node. This method of locking is called \textit{hand-over-hand} locking. This method allows threads to traverse the data structure in a pipelined fashion.\\[3mm]
 To avoid deadlocks, all threads must acquire the locks in some predefined order, e.g. in the case of the sorted linked list, all threads start at the head and don't try to ''skip'' nodes. 
 \begin{example}
@@ -332,7 +332,7 @@ We've now implemented an actual concurrent data structure, in the sense that sev
 
 %==============================================================================================================================
 
-\subsubsection{Optimistic Locking}
+\subsubsection{Optimistic Locking} \label{optimistic locking}
 With \textit{optimistic locking}, we take somewhat of a risk. We iterate the data structure without taking any locks. Once we've found the required elements we lock them and check if everything is still correct. If we find that in-between finding the elements and taking the locks the state of the data structure changed to one where we can't execute our operation reliably anymore, we start over. As such conflicts are rare, we consider this approach to be optimistic.\\[3mm]
 Implementing such a verification method is non-trivial and requires careful thought. What state do we, as an operating thread, \textit{expect} and how can we check that this expected state actually holds?
 \newpage
@@ -359,6 +359,9 @@ We've now been able to alleviate most issues. Nonetheless, a few remain. First, 
     \item the node is reachable.
 \end{itemize}
 The \texttt{remove} method now first \textit{lazily} removes a node by setting its \texttt{marked} bit, then \textit{physically} removes it, e.g. by redirecting the pointer from the previous node. We adjust the \texttt{validate} method so that it only checks whether the \texttt{marked} bit is set and whether the local state is still as expected. Therefore, the remainder of the \texttt{add} and \texttt{remove} methods can be left the same. Finally, we change the \texttt{contains} method such that it simply iterates the data structure without taking any locks and, if it finds the specified node, checks whether it's marked or not.
+
+\newpage
+
 \begin{example}
     The concrete implementation of the sorted linked list according to the lazy locking strategy now looks as follows.
     \begin{figure}[H]
@@ -476,7 +479,7 @@ We say that method call $m_0$ precedes a method call $m_1$ if $m_0$ finished bef
 
 %==============================================================================================================================
 
-\subsubsection{Sequential Consistency}
+\subsubsection{Sequential Consistency} \label{sequentially consistent}
 \begin{definition}
     A program must fulfill two requirements to be deemed \textbf{sequentially consistent}:
     \begin{itemize}
@@ -505,7 +508,7 @@ Note that it's possible for a history to have several possible sequential orderi
 
 %==============================================================================================================================
 
-\subsubsection{Linearizability}
+\subsubsection{Linearizability} \label{linearizable}
 The idea behind linearizability is that the concurrent history is equivalent to some sequential history. The rule is that if one method call precedes another, then the earlier call must have taken effect before the later call. By contrast, if two method calls overlap,  then their order is ambiguous, and we are free to order them in any convenient way.
 \begin{definition}
     A history \textbf{H} is linearizable if it has an extension \textbf{H'} such that \textbf{H'} is complete and there is a legal sequential history \textbf{S} such that
@@ -524,7 +527,7 @@ Composability is important because we can design, implement and also prove thing
 %==============================================================================================================================
 %==============================================================================================================================
 
-\subsection{Consensus}
+\subsection{Consensus} \label{consensus protocol}
 To bring this chapter to a close, we want to define a notion of how \textit{strong} a certain synchronization primitive, such as test-and-set, is. Using this we could, for example, show that there is an ordering on all synchronization primitives, such that no primitive at one level can be used for a wait-free or lock-free implementation of any primitives at higher levels. \\[3mm]
 The idea is as follows: Each class in the hierarchy has an associated \textit{consensus number}, which is the maximum number of threads for which objects of the class can solve an elementary synchronization problem called \textit{consensus}. \\[3mm]
 A \textit{consensus object} provides a single method \texttt{decide()}. Each thread calls the \texttt{decide()} method with its input v at most once. The object's \texttt{decide()} method will then return a value meeting the following conditions:
@@ -572,7 +575,8 @@ In the proof above, one might be tempted to solve the problems leading contradic
 \subsection{Exercises}
     \begin{ExerciseList}
         
-        \Exercise[title={Mutual Exclusion},label=MEI].\quad A program is executed by two threads \textbf{A} and \textbf{B}. Each thread has three statements, labelled $a_i$ and $b_i$, respectively. Statements $a_3$ and $b_3$ correspond to the critical section. In the following state diagrams, each state is described by the current statement for each thread in the form $\{a_i,b_i\}$. Arrows show the possible state transitions. For each of the diagrams, decide whether the program implements mutual exclusion correctly. If not, argue what the problem(s) are. Distinguish between livelock and deadlock.
+        \Exercise[title={Mutual Exclusion},label=MEI].\quad A program is executed by two threads \textbf{A} and \textbf{B}. Each thread has three statements, labelled $a_i$ and $b_i$, respectively. Statements $a_3$ and $b_3$ correspond to the critical section. In the following state diagrams, each state is described by the current statement for each thread in the form $\{a_i,b_i\}$. Arrows show the possible state transitions.\\[3mm] 
+        For each of the diagrams, decide whether the program implements mutual exclusion correctly. If not, argue what the problem(s) are. Distinguish between livelock and deadlock.
                 
             \begin{figure}[H]
                 \centering
@@ -621,7 +625,7 @@ In the proof above, one might be tempted to solve the problems leading contradic
                     \centering
                     \includegraphics[scale=0.45]{MysteryStack.png}
                 \end{figure}
-                Name the progress conditions fulfilled by this implementation of the \texttt{push} method and describe your reasoning.
+                Name the \nameref{progress conditions} fulfilled by this implementation of the \texttt{push} method and describe your reasoning.
             \Question Prove that a wait-free program cannot use locks.
             \Question Suppose two cooks share a kitchen. In order to avoid both cooks using the same ingredient simultaneously (which would be really awkward), cooks need to know in advance what ingredients they need and then call the following program:
             \begin{figure}[H]
@@ -647,7 +651,7 @@ In the proof above, one might be tempted to solve the problems leading contradic
             
         
         \Exercise[title={Peterson's},label=IP].\quad \\
-            \Question Consider the following implementation of Peterson's lock.
+            \Question Consider the following implementation of the \nameref{Peterson's Lock}.
                 \begin{figure}[H]
                     \centering
                     \includegraphics[scale=0.45]{badPeterson.png}
@@ -683,22 +687,21 @@ In the proof above, one might be tempted to solve the problems leading contradic
                 \end{itemize}
         
         
-        \Exercise[title={Fairness},label=Filter].\quad Recall the definition of \textit{first-come-first-serve}: A lock is first-come-first-served if, whenever thread A finishes its doorway before thread B starts its doorway, A cannot be overtaken by B. \\[3mm]
-        Describe an execution of the Filter Lock which doesn't adhere to the definition of first-come-first-served.
+        \Exercise[title={Fairness},label=Filter].\quad Recall the definition of \textit{first-come-first-served}: A lock is first-come-first-served if, whenever thread A finishes its doorway before thread B starts its doorway, A cannot be overtaken by B. \\[3mm]
+        Describe an execution of the \nameref{Filter Lock} which doesn't adhere to the definition of first-come-first-served.
         \Answer[ref={Filter}].\quad Suppose $n = 3$, thread A is stuck at level 0, thread B at level 1 and thread C is at level 2, i.e. in the critical section. C finishes its critical section and releases the lock, thereby setting its level to 0. Now that there are no more threads at any higher levels, B enters the critical section. B finishes its critical section and also sets its level to 0. Let's say both B and C attempt to acquire the lock again, ending up with \texttt{victim[1] == C}. While A could, in theory, enter the next level, B might be faster and enter level 1 (and subsequently level 2, i.e. the critical section). Therefore, despite having completed the doorway section before B started its doorway sections, A was overtaken by B. Thus, the Filter Lock isn't fair.
         
+        %TODO: Add exercise on barriers (build on "left as an exercise" mentioned in section)
         
         \Exercise[title={Lock Granularity},label=LG].\quad \\
-            \Question Explain why the fine-grained locking algorithm isn't subject to deadlock.
-            \Question Show a scenario in the optimistic locking algorithm where a thread is forever attempting to delete a node.
+            \Question Explain why the \nameref{fine-grained locking} algorithm isn't subject to deadlock.
+            \Question Show a scenario in the \nameref{optimistic locking} algorithm where a thread is forever attempting to delete a node.
         \pagebreak
             
         \Answer[ref={LG}].\quad \\
             %Include example of swapping order in which pred and curr are locked in add method
             \Question For a deadlock to occur, the dependency graph must allow for a cyclic dependency. In the fine-grained locking algorithm, all threads obtain the locks in a set order. In the case of the sorted linked list, for example, all threads acquire locks in increasing order. Therefore, a cyclic dependency becomes impossible.\\[3mm]
             Suppose that the \texttt{add} method of the sorted linked list first acquired the lock for \texttt{curr}, then for \texttt{pred}. If another thread is executing the \texttt{remove} method, it might've already acquired the lock for \texttt{pred}, and be attempting to acquire the lock for \texttt{curr}. Both threads would be waiting for the other to release the lock. Thus, two threads acquiring locks in different orders can result in a deadlock.
-            
-            \pagebreak
             
             \Question Suppose thread A wishes to remove node c. It can happen that the \texttt{validate} method always returns \texttt{false}, thereby forcing A to always retry and never successfully remove c. A scenario in which the \texttt{validate} method always returns \texttt{false} would be when other threads are continuously adding and removing nodes in between c and its predecessor, i.e. the comparison \texttt{pred.next == curr} may evaluate to \texttt{false} everytime. As long as no other thread removes c, A will continue to try to remove c.
 
@@ -743,7 +746,7 @@ In the proof above, one might be tempted to solve the problems leading contradic
                     }
                 \end{multicols*}
                 \vspace{-10pt}
-        \Question For each of the histories above, are they sequentially consistent? Linearizable? Justify your answer.
+        \Question For each of the histories above, are they sequentially consistent? linearizable? Justify your answer.
         \Question Is the result of composing several sequentially consistent objects itself always sequentially consistent? Either justify your answer or give a counterexample.
         
         \Answer[ref={LSC}]. \\

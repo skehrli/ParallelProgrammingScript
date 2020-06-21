@@ -139,7 +139,7 @@ The methods to send and receive messages are declared as follows:
     \end{subfigure}
 \end{figure}
 Note that in the case of the \texttt{Recv} method it's not necessary to declare \texttt{src} or \texttt{tag}, instead one could use \texttt{MPI\_ANY\_SOURCE} or \texttt{MPI\_ANY\_TAG}. Both methods are declared in the \texttt{COMM} class, i.e. can only be used in combination with a communicator.\\[3mm]
-The two methods declared above are so-called \textit{blocking} operations, which means they won't return until the action has been completed \textit{locally} (i.e. the message has been fully to the outgoing buffer, or the message has been fully copied from the incoming buffer). Their \textit{non-blocking} variants \texttt{recv} and \texttt{send} return \textit{immediately}. We can also send synchronous messages, i.e. the operation blocks until the message has been received, using \texttt{Ssend}. Note that the \texttt{Recv} method declared above already is synchronous.\\[3mm]
+The two methods declared above are so-called \textit{blocking} operations, which means they won't return until the action has been completed \textit{locally} (i.e. the message has been fully to the outgoing buffer, or the message has been fully copied from the incoming buffer). Their \textit{non-blocking} variants \texttt{irecv} and \texttt{isend} return \textit{immediately}. We can also send synchronous messages, i.e. the operation blocks until the message has been received, using \texttt{Ssend}. Note that the \texttt{Recv} method declared above already is synchronous.\\[3mm]
 To summarize and complete what we've learned up until now, we can write a simple MPI program using the following six functions:
 \begin{itemize}
     \item \texttt{MPI.Init()}: initialize the MPI library (the first routine called)
@@ -279,11 +279,13 @@ It's important to know that the method declarations aren't necessarily accurate,
         \Question Adapt the \texttt{computePrimeFactors} method such that the resulting array is present in all processes at the end. \textit{Hint: Look up the \href{https://www.open-mpi.org/doc/v3.0/man3/MPI_Allgather.3.php}{\texttt{Allgather}} method.}
         \Question Implement a method \texttt{randAvg} that works as follows:
             \begin{enumerate}
-                \item Generate a random array of numbers on the root process (process 0).
-                \item Distribute the numbers among all processes, giving each process an equal-sized chunk of the array. Assume that the array length is divisible by the number of processes.
+                \item Generate a random array of \texttt{int}s on the root process (process 0).
+                \item Distribute the array among all processes, giving each process an equal-sized chunk. Assume that the array length is divisible by the number of processes.
                 \item Each process computes the average of their subset of the numbers.
                 \item Gather all averages to the root process. The root process then computes the average of these numbers to get the final average.
             \end{enumerate}
+            As an additional exercise, adapt your code to deal with array lengths which are not divisible by the number of processes.
+        \Question Given a group of people sitting nicely in a row, we're going to play waterfall. The first person in the row thinks of a number, which it whispers into the next person's ear. The next person then adds 1 to this number, whispers the new number into the next person's ear, and so on. Implement this game, replacing people by processes, only using \textit{point-to-point communication}. Make sure that the "whispering" process only continues execution once it's sure that the next process has actually "heard" the secret number.
     
     \Answer[ref={MPI}]. \quad
         \Question We use the \texttt{Allgather} method to make the code more concise.
@@ -298,6 +300,12 @@ It's important to know that the method declarations aren't necessarily accurate,
             \centering
             \includegraphics[scale=0.45]{randAvg.png}
         \end{figure}
+        \Question We use the \texttt{Ssend} and \texttt{Recv} methods to implement the game:
+        \begin{figure}[H]
+            \centering
+            \includegraphics[scale=0.45]{MPI_Waterfall.png}
+        \end{figure}
+        Note that the above code occasionally throws a \texttt{NullPointerException}. If you figure out why, please send a mail to the mail address listed on the cover page.
 \end{ExerciseList}
 \newpage
 \subsection{Solutions}
