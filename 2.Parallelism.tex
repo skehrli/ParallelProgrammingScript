@@ -400,7 +400,7 @@ Over the years it has become evident that improving sequential processor perform
         \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to Amdahl's Law (assuming best possible speedup)?
         \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \nameref{Gustafson's Law}?
     \Answer[ref={AGL}].
-        \Question We see that the program has a serial fraction of 40\%. Therefore, we set $\mathbf{f} = 0.4$ and insert this into the formula specified by Amdahl's Law:
+        \Question We see that the program has a serial fraction of at least 40\%. Therefore, we set $\mathbf{f} \geq 0.4$ and insert this into the formula specified by Amdahl's Law:
             \begin{equation*}
                 S_P \leq \frac{1}{\mathbf{f} + \frac{1-\mathbf{f}}{P}} = \frac{1}{0.4 + \frac{0.6}{P}} \xrightarrow{P \rightarrow \infty} \frac{1}{0.4} = 2.5
             \end{equation*}
