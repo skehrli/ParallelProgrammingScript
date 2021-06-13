@@ -4,11 +4,11 @@
 
 \addtolength{\tabcolsep}{-2pt}
 
-\section{Parallelism}
+\section{Parallelism} \label{Parallelism}
 This chapter covers the basics of parallelism and how to examine the performance of a parallel program. Recall that when we talk about parallelism, we mean the use of additional computational resources to solve a problem faster. The exercises in this chapter will usually ask you to implement a parallel algorithm to solve a certain problem, to recognize the issue of a given implementation and to analyze the performance of an implementation. 
-\subsection{Performance}
-\subsubsection{Speedup}
-Before we begin to have a look at different ways of measuring performance, we first need to introduce some terminology. To that end, let $P$ denote the number of processors available during the execution of a program.
+\subsection{Performance} \label{Performance}
+\subsubsection{Speedup} \label{Speedup}
+Before we have a look at different ways of measuring performance, we first need to introduce some terminology. To that end, let $P$ denote the number of processors available during the execution of a program.
 \begin{definition} 
 $\mathbf{T_P}$ is the time it takes the program to execute on $P$ processors.
 \begin{remark}
@@ -23,19 +23,19 @@ The \textbf{speedup} of a program is
 \end{equation*}
 \end{definition}
 The speedup is essentially the ratio of the sequential execution time to the execution time given $P$ processors.\\
-Naively, we might expect the speedup of our program to always be $S_P = P$, i.e. $T_P = T_1 / P$. However, reality is often disappointing. In reality, additional overheads caused by inter-thread dependencies, creating threads and communicating between them and memory-hierarchy issues can greatly limit the speedup we gain from adding more processors.
+Naively, we might expect the speedup of our program to always be $S_P = P$, i.e. $T_P = T_1 / P$. However, reality is often disappointing. Additional overheads caused by inter-thread dependencies, creating threads, communicating between them and memory-hierarchy issues can greatly limit the speedup we gain from adding more processors.
 
 %==============================================================================================================================
 
-\subsubsection{Amdahl's Law}
-We noted in the previous section that the speedup of a given parallel program can be greatly decreased due to overhead caused by several issues introduced by parallelizing the program. In fact, any sequential parts of a program can drastically impact the maximum achievable speedup. We will derive Amdahl's law here to see why this is the case.\\
+\subsubsection{Amdahl's Law} \label{Amdahl's Law}
+We noted in the previous section that the speedup of a given parallel program can be greatly decreased due to overhead caused by several issues introduced by parallelizing the program; in fact, any sequential part of a program can drastically impact the maximum achievable speedup. We will derive Amdahl's law here to see why this is the case.\\
 \\
 Let $W_{ser}$ denote the time spent doing non-parallelizable, serial work and $W_{par}$ denote the time spent doing parallelizable work.\\
 We then write:
 \begin{equation*}
     T_1 = W_{ser} + W_{par}
 \end{equation*}
-It's easy to see that $T_{ser}$ remains constant as we increase the number of processors. Therefore, given $P$ processors, we obtain the following lower bound on $T_P$:
+It's easy to see that $W_{ser}$ remains constant as we increase the number of processors. Therefore, given $P$ processors, we obtain the following lower bound on $T_P$:
 \begin{equation*}
     T_P \geq W_{ser} + \frac{W_{par}}{P}
 \end{equation*}
@@ -60,11 +60,11 @@ When we let $P$ go to $\infty$, we see:
     S_\infty \leq \frac{1}{\mathbf{f}}
 \end{equation*}
 In order to see why this is such an important result, we can try plugging in a couple of values. Assume that 25\% of a program is non-parallelizable. This means that even with the \textit{IBM Blue Gene/P} supercomputer with its 164'000 cores, we can only achieve a speedup of at most 4. While a depressing result at first sight, this makes perfect sense when we consider the fact that these 25\% are completely fixed, in the sense that the execution time can't possibly be reduced past this point.\\[0.3cm]
-The conclusion we can draw from this result is that it's worth investing some more time into reducing the sequential fraction of our program, e.g. by reducing the overhead of communicating between threads or by reducing the granularity of locks in our code as much as possible.
+The conclusion to draw from this result is that it's worth investing some more time into reducing the sequential fraction of our program, e.g. by reducing the overhead of communicating between threads or by reducing the granularity of locks in our code as much as possible.
 
 %==============================================================================================================================
 
-\subsubsection{Gustafson's Law}
+\subsubsection{Gustafson's Law} \label{Gustafson's Law}
 Amdahl's law considered a fixed workload and provides us with an upper bound on the speedup achievable when increasing the number of processors at our disposal. As the obtained result is rather depressing, we seek to find something slightly more optimistic. This leads us to an approach where we increase the problem size as we improve the resources at our disposal. In other words, we consider the time interval to be fixed and look at the problem size.\\
 Let $W$ denote the work done in a fixed time interval. We get
 \begin{equation*}
@@ -88,7 +88,7 @@ If we again consider a program where 25\% is non-parallelizable, we get a speedu
 %==============================================================================================================================
 %==============================================================================================================================
 
-\subsection{Divide \& Conquer}
+\subsection{Divide \& Conquer} \label{Divide \& Conquer}
 In divide \& conquer we split a problem into smaller subproblems, solve the task recursively for each of these and combine the results such that we obtain the final result for the entire problem. To see how this approach works, let's construct a small example:
 \begin{example}
     Through some weird twist of faith, we're given a list of the number of clocks each Swiss citizen posseses and are tasked with finding the maximum among all of these. For the sake of simplicity, suppose this list only has eight entries. 
@@ -99,7 +99,7 @@ In divide \& conquer we split a problem into smaller subproblems, solve the task
     \begin{center}
         \hspace*{\fill} 15\quad 7\quad 9\quad 8 \hspace*{\fill} 4\quad 22\quad 42\quad 13 \hspace*{\fill}
     \end{center}
-    We then continue on like this until we reach a base case. Note that we break the list into single numbers and not into pairs of numbers. The reason for this is that the list might have an odd length, which of course couldn't be broken into pairs of numbers.
+    We then continue on like this until we reach a base case. Note that we break the list into single numbers and not into pairs of numbers. The reason for this is that the list might have an odd length, which of course can't be broken into pairs of numbers.
     \begin{center}
         \hspace*{\fill} 15 \hspace*{\fill} 7 \hspace*{\fill} 9 \hspace*{\fill} 8 \hspace*{\fill} 4 \hspace*{\fill} 22 \hspace*{\fill} 42 \hspace*{\fill} 13 \hspace*{\fill}
     \end{center}
@@ -111,14 +111,14 @@ In divide \& conquer we split a problem into smaller subproblems, solve the task
     \begin{center}
         42
     \end{center}
-    We've thus come to the conclusion that the largest number of clocks possessed by a single person in Switzerland is 42.
+    We've thus come to the conclusion that the largest number of clocks owned by a single person in Switzerland is 42.
 \end{example}
 This algorithm consisted of three steps. First, we broke the list into two smaller lists. This is known as the ''divide'' step. Then, we solved the task for each of these sublists. This is known as the ''conquer'' step. Finally, we combined the results of the subproblems by taking the maximum of the two returned maxima.\\[0.3cm]
 While divide \& conquer algorithms seem very natural to parallelize, we currently have no easy way of determining the efficiency of these algorithms in a parallel setting and it's quite tedious to implement using regular Java threads. We will therefore first introduce a way of visualizing the performance of a divide \& conquer algorithm and will then look at two different libraries to see how we can easily implement this.
 
 %==============================================================================================================================
 
-\subsubsection{Task Graphs}
+\subsubsection{Task Graphs} \label{Task Graphs}
 We will describe a program execution as a directed acyclic graph where:
 \begin{itemize}
     \item Nodes are pieces of work the program performs. Each node will have a constant execution time per task. In most cases we will interpret the execution time per node as 1.
@@ -265,7 +265,7 @@ We will now connect this visual representation of the execution of a program wit
             \fill [black] (41.4,-52) -- (41.9,-51.2) -- (40.9,-51.2);
         \end{tikzpicture}
     \end{center}
-    Let's say we now wish to compute the maximum achievable speedup we can gain by parallelizing this algorithm, i.e. $S_\infty$. We know that the formula for speedup is
+    Let's say we wish to compute the maximum achievable speedup we can gain by parallelizing this algorithm, i.e. $S_\infty$. We know that the formula for speedup is
     \begin{equation*}
         S_P = \frac{T_1}{T_P}
     \end{equation*}
@@ -278,7 +278,7 @@ We will now connect this visual representation of the execution of a program wit
 
 %==============================================================================================================================
 
-\subsubsection{Executor Service}
+\subsubsection{Executor Service} \label{Executor Service}
 Instead of managing the threads ourselves we can use a library which manages a threadpool to which we can submit tasks. A task is either:
 \begin{itemize}
     \item A \texttt{Runnable} object, which implements a method \texttt{void run()} and doesn't return a result
@@ -289,6 +289,7 @@ Upon submitting a task a \texttt{Future$<$T$>$} is created, which contains the r
 \newpage
 
 \begin{example}
+\label{ex:ES_Div&Conq}
     We wish to submit tasks to the \texttt{ExecutorService} such that we can obtain some sort of result from the task's execution. We therefore need to implement a \texttt{Callable} task (i). We've additionally provided the code for creating an \texttt{ExecutorService} and submitting the topmost task (ii). Try running it locally and see what happens. 
     \begin{figure}[H]
         \centering
@@ -305,13 +306,13 @@ Upon submitting a task a \texttt{Future$<$T$>$} is created, which contains the r
     \end{figure}
     \noindent You should see that the program never terminates. The reason for this is that the \texttt{ExecutorService} limits the number of threads that can be spawned. Once all threads are occupied by tasks waiting for the result of spawned subtasks, execution is therefore halted. No threads are available to run the subtasks on, i.e. the subtasks will wait indefinitely.
 \end{example}
-With the \texttt{ExecutorService} the limited thread pool size caused the program to run forever, as all currently active threads were occupied by tasks waiting for the spawned subtasks to return. While there are possible approaches that could alleviate this problem, e.g. seperating the work partitioning from solving the sub-tasks, they are all non-trivial to implement and are therefore not well suited for use in practice.
+With the \texttt{ExecutorService} the limited thread pool size caused the program to run forever, as all currently active threads were occupied by tasks waiting for the spawned subtasks to return. While there are possible approaches that could alleviate this problem, e.g. separating the work partitioning from solving the sub-tasks, they are all non-trivial to implement and are therefore not well suited for use in practice.
 
 %==============================================================================================================================
 
-\subsubsection{Fork/Join Framework}
+\subsubsection{Fork/Join Framework} \label{Fork/Join Framework}
 We continue our search for a library well-suited to implementing divide \& conquer algorithms. The \texttt{java.util.concurrent} package includes classes designed exactly for this type of fork-join parallelism.\\
-Compared to Java threads, the usage of these classes is exactly the same, but with some different names and interfaces. First, we'll introduce the required terminology. Second, we'll have a look at the generic recipe for implementing fork-join parallelism.\\
+Compared to Java threads, the usage of these classes is identical, but with some different names and interfaces. First, we'll introduce the required terminology. Second, we'll have a look at the generic recipe for implementing fork-join parallelism.\\
 \\
 We use the library as follows:
 \begin{itemize}
@@ -338,15 +339,15 @@ Also, note that in the case of \texttt{RecursiveTask$<$T$>$}, \texttt{join} now 
         \end{subfigure}
     \end{figure}
     \noindent Several things should be noted in this example. First, changing anything about the order in which the subtasks were called will result in a sequential execution (try it!). Second, similar to how we did it for regular threads, we call \texttt{compute()} instead of submitting another task using \texttt{fork()}.\\
-    Both in the case of the \texttt{ForkJoin}-framework and of \texttt{ExecutorService}, one should pay extra attention as to how to split the array such that all indices are covered exactly once. In this example and example 2.3, note the way the middle index was computed and think about what indices the \texttt{h} and \texttt{l} variables represented exactly.
+    Both in the case of the \texttt{ForkJoin}-framework and of \texttt{ExecutorService}, one should pay extra attention as to how to split the array such that all indices are covered exactly once. In this example and example \ref{ex:ES_Div&Conq}, note the way the middle index was computed and think about what indices the \texttt{h} and \texttt{l} variables represented exactly.
 \end{example}
 \pagebreak
 %==============================================================================================================================
 %==============================================================================================================================
 
-\subsection{Pipelining}
+\subsection{Pipelining} \label{Pipelining}
 There are three approaches to applying parallelism to improve sequential processor performance. The first is vectorization, where we essentially apply operations N-at-a-time, as opposed to the standard one-at-a-time approach. The second is instruction level parallelism, where we ask ourselves which instructions are independent of each other and can therefore be executed in parallel and/or reordered. This is where keywords such as superscalar CPUs and out-of-order execution come into play. The third and most important approach that we will consider is pipelining. \\[3mm]
-Pipelining is a technique where multiple independent instructions are overlapped in execution through the use of multiple execution units, provided they are available for use.
+Pipelining is a technique where multiple independent instructions are overlapped in execution through the use of several execution units, provided they are available for use.
 \begin{definition}
     \textbf{Throughput} is the number of instructions that exit the pipeline per a given time unit. Throughput can be calculated as follows:
     \begin{equation*}
@@ -357,14 +358,14 @@ Note that we usually consider throughput when the pipeline is fully utilized, i.
 \begin{definition}
     \textbf{Latency} is the time to perform a single computation, including wait time resulting from resource dependencies.
 \end{definition}
-When designing a pipeline, it's of course always our aim to increase throughput and decrease latency as much as possible. However, the two goals are often conflicting.
+When designing a pipeline, it's always our aim to increase throughput and decrease latency as much as possible. However, the two goals are often conflicting.
 \begin{definition}
     A pipeline is \textbf{balanced} if the latency remains constant over time.
 \end{definition}
 \begin{example}
-    We return to the good old washing cycle pipeline, only with a little twist this time around. The stages of the washing cycle consist of first using the washing machine, then the dryer, folding the washing, and finally putting it away in the closet. The washing machine is quite a cheap brand and takes 15 seconds per washing (as opposed to the usual 5 seconds). The dryer takes 10 seconds, folding the washing 5 seconds, and putting it away in the closet another 5 seconds.\\[3mm]
+    We return to the good old washing cycle pipeline, only with a little twist this time around. The stages of the washing cycle consist of first using the washing machine, then the dryer, folding the washing, and finally putting it away in the closet. The washing machine is quite a cheap brand and takes 15 minutes per washing (as opposed to the usual 5 minutes). The dryer takes 10 minutes, folding the washing 5 minutes, and putting it away in the closet another 5 minutes.\\[3mm]
     \begin{tabular}{l | *{19}{c}}
-        Time (s) & 0 & 5 & 10 & 15 & 20 & 25 & 30 & 35 & 40 & 45 & 50 & 55 & 60 & 65 & 70 & 75 & 80 & 85 & 90 \\
+        Time (m) & 0 & 5 & 10 & 15 & 20 & 25 & 30 & 35 & 40 & 45 & 50 & 55 & 60 & 65 & 70 & 75 & 80 & 85 & 90 \\
         \hline
         Load 1 & w & w & w & d & d & f & c\\
         Load 2 &   &   &   & w & w & w & d & d & f & c\\
@@ -372,9 +373,9 @@ When designing a pipeline, it's of course always our aim to increase throughput 
         Load 4 &   &   &   &   &   &   &   &   &   & w & w & w & d & d & f & c \\
         Load 5 &   &   &   &   &   &   &   &   &   &   &   &   & w & w & w & d & d & f & c
     \end{tabular} \\[3mm]
-    Looking at the definitions above, we find that the latency is 30 seconds and the throughput is 1 load per 15 seconds. In order to improve our throughput, we buy a new washing machine and give away the old one to charity. The new execution time for the washing stage is 5 seconds. \\[3mm]
+    Looking at the definitions above, we find that the latency is 30 minutes and the throughput is 1 load per 15 minutes. In order to improve our throughput, we buy a new washing machine and give away the old one to charity. The new execution time for the washing stage is 5 minutes. \\[3mm]
     \begin{tabular}{l | *{19}{c}}
-        Time (s) & 0 & 5 & 10 & 15 & 20 & 25 & 30 & 35 & 40 & 45 & 50 & 55 & 60 & 65 & 70 & 75 & 80 & 85 & 90 \\
+        Time (m) & 0 & 5 & 10 & 15 & 20 & 25 & 30 & 35 & 40 & 45 & 50 & 55 & 60 & 65 & 70 & 75 & 80 & 85 & 90 \\
         \hline
         Load 1 & w & d & d & f & c\\
         Load 2 &   & w & - & d & d & f & c\\
@@ -382,9 +383,9 @@ When designing a pipeline, it's of course always our aim to increase throughput 
         Load 4 &   &   &   & w & - & - & - & d & d & f & c \\
         Load 5 &   &   &   &   & w & - & - & - & - & d & d & f & c
     \end{tabular} \\[3mm]
-    We see that our new throughput is 1 load per 10 seconds. Latency, however, seems to be increasing, i.e. the pipeline is now unbalanced. 
+    We see that our new throughput is 1 load per 10 minutes. Latency, however, seems to be increasing, i.e. the pipeline is now unbalanced. 
 \end{example}
-\noindent This example illustrated one important problem that can occur in pipelines. Despite achieving a high throughput, the latency increased indefinitely.
+\noindent This example illustrated one important problem that can occur in pipelines. Despite achieving high throughput, the latency increased indefinitely.
 Over the years it has become evident that improving sequential processor performance with methods such as these is not enough. This has led to the development of parallel architectures such as multicore processors and processors implementing simultaneous multithreading as we know them today.
 
 \pagebreak
@@ -395,11 +396,11 @@ Over the years it has become evident that improving sequential processor perform
 
 \begin{ExerciseList}
     \Exercise[title={Amdahl's Law, Gustafson's Law, Performance},label=AGL].
-        \Question Suppose a computer program has a method \textbf{M} that cannot be parallelized, and that this method accounts for 40\% of the program’s execution time. What is the limit for the overall speedup that can be achieved by running the program on an n-processor multiprocessor machine according to \textbf{Amdahl's Law}?
-        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \textbf{Amdahl's Law} (assuming best possible speedup)?
-        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \textbf{Gustafson's Law}?
+        \Question Suppose a computer program has a method \textbf{M} that cannot be parallelized, and that this method accounts for 40\% of the program’s execution time. What is the limit for the overall speedup that can be achieved by running the program on an n-processor multiprocessor machine according to \nameref{Amdahl's Law}?
+        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to Amdahl's Law (assuming best possible speedup)?
+        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \nameref{Gustafson's Law}?
     \Answer[ref={AGL}].
-        \Question We see that the program has a serial fraction of 40\%. Therefore, we set $\mathbf{f} = 0.4$ and insert this into the formula specified by Amdahl's Law:
+        \Question We see that the program has a serial fraction of at least 40\%. Therefore, we set $\mathbf{f} \geq 0.4$ and insert this into the formula specified by Amdahl's Law:
             \begin{equation*}
                 S_P \leq \frac{1}{\mathbf{f} + \frac{1-\mathbf{f}}{P}} = \frac{1}{0.4 + \frac{0.6}{P}} \xrightarrow{P \rightarrow \infty} \frac{1}{0.4} = 2.5
             \end{equation*}
@@ -450,19 +451,20 @@ Over the years it has become evident that improving sequential processor perform
             \includegraphics[scale=0.55]{MaxSubArraySumForkJoin_Sol.png}
         \end{figure}
     
-    \Exercise[title={Pipelining},label=pipe].\quad Over at UZH the law students have been tasked with writing a legal essay about the philosophy of Swiss law. In order to write the essay, a student first needs to inform themselves about the subject. To do so, they must read from four different books, each of which contains information necessary to understand the next book. \\[3mm]
-    Every student takes the exact same amount of time to read a book, namely:
+    \Exercise[title={Pipelining},label=pipe].\quad Over at UZH, the law students have been tasked with writing a legal essay about the philosophy of Swiss law. To write the essay, a student first needs to inform themselves about the subject. To do so, they must read from four different books, each of which contains some information necessary to understand the next book. \\[3mm]
+    Every student takes the same amount of time to read a book, and can only read the books in the specified order:
     \begin{enumerate}[label=\arabic*)]
         \item\ Reading book A takes 80 minutes
         \item\ Reading book B takes 40 minutes
         \item\ Reading book C takes 120 minutes
         \item\ Reading book D takes 40 minutes
-    \end{enumerate}
+    \end{enumerate}\\
+    Unfortunately, the library only has a single copy of each book.
         \Question Let's assume all law students are a bit too competitive and don't return any books before they're done reading all of them. How long will it take for 4 students until all of them have started writing their essays?
         \Question The library introduces a ''one book at a time'' policy, i.e. the students have to return a book before they can start on the next one. How long will it now take for 4 students until all of them have started writing their essays? What is the throughput of this ''pipeline'' per hour? What is the latency?
         \Question Where is the problem with this system? What can the library do to solve this problem?
     \Answer[ref={pipe}].\\
-        \Question In the case of a sequential execution we simply need to add the execution times of the four stages together and multiply this by the number of students.
+        \Question In the case of sequential execution, we simply need to add the execution times of the four stages together and multiply this by the number of students.
             \begin{equation*}
                 (80 + 40 + 120 + 40) * 4 = 280 * 4  = 1120 \text{ minutes}
             \end{equation*}
