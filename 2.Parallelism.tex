@@ -84,6 +84,8 @@ We can now follow \textit{Gustafson's law}.
 \end{theorem}
 If we again consider a program where 25\% is non-parallelizable, we get a speedup of 4 when we increase the number of processors to 5.
 
+It has to be noted that Gustafson's law and Amdahls law aren't really different views on the same problem, but instead make different assumptions about the problem. Amdahl's law is based on the assumption that the problem size is fixed and that the time is minimized whereas Gustafson's law is based on the assumption that the time is fixed and that the problem size is minimized. For example Amdahl's law might be better applicable to problems like sorting a fixed set of integers, but Amdahl's law could be used to describe the problem of rendering a 3D-scene as detailed as possible - the level of detail can be increased in the case of 3D-rendering, but there's no such thing as sorting a set of integers in a more exact way.
+
 \pagebreak
 %==============================================================================================================================
 %==============================================================================================================================
@@ -121,7 +123,7 @@ While divide \& conquer algorithms seem very natural to parallelize, we currentl
 \subsubsection{Task Graphs} \label{Task Graphs}
 We will describe a program execution as a directed acyclic graph where:
 \begin{itemize}
-    \item Nodes are pieces of work the program performs. Each node will have a constant execution time per task. In most cases we will interpret the execution time per node as 1.
+    \item Nodes are pieces of work the program performs. Each node will have a an annotated execution time after which the results of the computation are available.
     \item Edges represent that the source node must complete before the target node begins, i.e. there is a data dependency along the edge.
 \end{itemize}
 We will now connect this visual representation of the execution of a program with the terminology introduced in the previous section by introducing two more terms:
@@ -284,7 +286,7 @@ Instead of managing the threads ourselves we can use a library which manages a t
     \item A \texttt{Runnable} object, which implements a method \texttt{void run()} and doesn't return a result
     \item or a \texttt{Callable$<$T$>$} object, which implements a method \texttt{T call()} and returns a result of type \texttt{T}.
 \end{itemize}
-Upon submitting a task a \texttt{Future$<$T$>$} is created, which contains the result of the submitted task. Implementing a divide \& conquer algorithm now looks a lot more straightforward.
+Upon submitting a task a \texttt{Future$<$T$>$} is created, which represents the result of an asynchronous computation, it also acts as a container for the value and can be used to wait for the underlying task to complete. Implementing a divide \& conquer algorithm now looks a lot more straightforward.
 
 \newpage
 
@@ -304,7 +306,7 @@ Upon submitting a task a \texttt{Future$<$T$>$} is created, which contains the r
             \caption{implementation of \texttt{main} method}
         \end{subfigure}
     \end{figure}
-    \noindent You should see that the program never terminates. The reason for this is that the \texttt{ExecutorService} limits the number of threads that can be spawned. Once all threads are occupied by tasks waiting for the result of spawned subtasks, execution is therefore halted. No threads are available to run the subtasks on, i.e. the subtasks will wait indefinitely.
+    \noindent You should see that the program never terminates. The reason for this is that the \texttt{ExecutorService} limits the number of threads that can be spawned. Once all threads are occupied by tasks waiting for the result of spawned subtasks, execution is therefore halted. Even though the threads aren't actually doing any useful work they still take up the allocated threads in the thread pool. No threads are available to run the subtasks on, i.e. the subtasks will wait indefinitely.
 \end{example}
 With the \texttt{ExecutorService} the limited thread pool size caused the program to run forever, as all currently active threads were occupied by tasks waiting for the spawned subtasks to return. While there are possible approaches that could alleviate this problem, e.g. separating the work partitioning from solving the sub-tasks, they are all non-trivial to implement and are therefore not well suited for use in practice.
 
@@ -322,6 +324,7 @@ We use the library as follows:
     \item Instead of a topmost call to \texttt{run}, we create a \texttt{ForkJoinPool} and call \texttt{invoke}
 \end{itemize}
 Also, note that in the case of \texttt{RecursiveTask$<$T$>$}, \texttt{join} now returns a result.\\
+The fork-join library is able to see under the hood that it can reuse the thread if it is only waiting for another task to complete. This isn't possible to detect if plain java threads are used, thus this approach only works if we limit ourselves to awaiting and spawning tasks using the primitives provided by the library. This technique is called work-stealing scheduling.
 \begin{example}
     We again return to our previous example of trying to find the largest number of clocks currently owned by any Swiss citizen. We'd again like our tasks to return a result. We therefore need to implement a \texttt{RecursiveTask<T>} (i). We've additionally provided the code for creating a \texttt{ForkJoinPool} and submitting the topmost task (ii). Try running it locally and see if it works this time around. \\
     \\
@@ -339,6 +342,7 @@ Also, note that in the case of \texttt{RecursiveTask$<$T$>$}, \texttt{join} now 
         \end{subfigure}
     \end{figure}
     \noindent Several things should be noted in this example. First, changing anything about the order in which the subtasks were called will result in a sequential execution (try it!). Second, similar to how we did it for regular threads, we call \texttt{compute()} instead of submitting another task using \texttt{fork()}.\\
+    In this case we can also call \texttt{fork()} in for both subtasks and won't see any considerable slowdown: The fork-join framework won't create a new thread and the overhead will be minimal for any reasonable problem.It still makes sense to switch to a serial solution for smaller problem sizes and in the base case if optimal performance is required. \\
     Both in the case of the \texttt{ForkJoin}-framework and of \texttt{ExecutorService}, one should pay extra attention as to how to split the array such that all indices are covered exactly once. In this example and example \ref{ex:ES_Div&Conq}, note the way the middle index was computed and think about what indices the \texttt{h} and \texttt{l} variables represented exactly.
 \end{example}
 \pagebreak

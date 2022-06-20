@@ -10,7 +10,7 @@ This script was heavily inspired by ''The Art of Multiprocessor Programming'' by
 
 \subsection{Parallelism vs. Concurrency}
 The lecture and also this script are organized around a fundamental distinction between \textit{concurrency} and \textit{parallelism}. The definitions of these terms are not universal and many people use them differently. Nonetheless, the following definitions are the most generally accepted and making the distinction is important to facilitate discussions on the subject.\\[3mm]
-\textit{Parallel programming} is about using additional computational resources to solve a problem faster. 
+\textit{Parallel Programming} is about using additional computational resources to solve a problem faster. 
 \begin{example}
     Consider the trivial problem of summing up all numbers in an array. As far as we know, there is no sequential algorithm that can do better than $\Theta(n)$ time. Suppose instead we had 4 processors. We could then produce the result (hopefully) 4 times faster by partitioning the array into 4 segments, having each processor sum one segment, and combining the results with an extra 3 additions.
 \end{example}
@@ -44,7 +44,7 @@ To create a new thread in Java requires that you define a new class and then per
         \centering
         \includegraphics[scale=0.45]{Useless.png}
     \end{figure}
-    When running this program, it will print 40 lines of output, the order of which we cannot predict; in fact, you will probably see the output appear in different orders every run. This showcases that there is no guarantee that threads created earlier will run earlier. Therefore, multithreaded programs are \textit{nondeterministic}. This is an important reason why multithreaded programs are much harder to test and debug.\\[3mm]
+    When running this program, it will print 40 lines of output, the order of which we cannot predict; in fact, you will probably see the output appear in different orders every run. This showcases that there is no guarantee that threads created earlier will run earlier. Therefore, multithreaded programs can exhibit \textit{nondeterministic} behavior. This is an important reason why multithreaded programs are much harder to test and debug.\\[3mm]
     We can also see how this program worked around the fact that \texttt{run} doesn't take any arguments. Any ''arguments'' for the new thread are passed via the constructor, which then stores them in fields so that \texttt{run} can later access them.
 \end{example}
 We mentioned previously that we'd like to make a thread wait before reading a value until another thread has finished its computations, i.e. its \texttt{run} method. We can do this with the \texttt{join} keyword, which we'll introduce through another somewhat senseless example.
@@ -100,7 +100,7 @@ A \textit{data race} is a specific kind of race condition that is better describ
     \item When one thread might write an object field at the same moment that another thread also writes the same field.
 \end{itemize}
 \noindent Notice it is not an error for two threads to both read the same object field at the same time.\\[3mm]
-Our programs must never have data races even if it looks like a data race would not cause an error - if our program has data races, the execution of your program is allowed to do very strange things.
+Our programs must never have data races even if it looks like a data race would not cause an error - if our program has data races, the execution of your program is allowed to do very strange things: The exact behavior that the program is allowed to exhibit is usually defined in the memory model of a language, we'll get to the memory model of Java later.
 \begin{example}
     Let's consider a very simple example.
     \begin{figure}[H]
