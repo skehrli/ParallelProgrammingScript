@@ -569,6 +569,44 @@ In the case of \textit{binary consensus}, i.e. when the only possible decision v
 
 In the proof above, one might be tempted to solve the problems leading contradictions using locks or by allowing one thread to go first, but then the protocol wouldn't be guaranteed to finish within in a bounded number of steps, i.e. it wouldn't be wait-free.
  
+%==============================================================================================================================
+%==============================================================================================================================
+
+\subsection{Memory Models} \label{memory models}
+At their core most programming languages only define which results are possible when executing a program written in that language, but do not define what happens on a hardware level. The illusion that the code is executed exactly as written on a hardware level mostly exists for the convenience of the programmer, but it is not a requirement. This makes programming languages portable between different systems where different hardware mechanisms can be used to implement the programming language. Defining the possible outputs is especially hard for concurrent programs where the language wants to allow the implementor of the compiler some freedom for optimization while at the same time giving programmers a reasonable amount of guarantees about the program's behaviour. Memory models define a valid set of executions, i.e. orders in which the underlying actions of a program are executed.
+
+We'll take a look at the memory model of the Java programming language here - not all details are important, but some general overview can be helpful when considering whether a program works correctly or not. \\
+Let's go over some guarantees that Java provides - please note that some of the concepts are presented in a slightly simplified form here:
+\begin{itemize}
+    \item Access atomicity: Reads / writes to fields are atomic, except for fields of type long / double, which are not atomic except when they are declared as volatile. This allows 32-bit Java VMs to use regular 32-bit reads / writes for cases where access atomicity isn't required.
+    \item Independence: Array elements and fields of objects are independent, i.e. writing to one two distinct elements / fields of an array should ont influence other elements / other fields. This prohibits word tearing, which is common for architectures where memory can only be accessed in the unit of a word.
+\end{itemize}
+
+Valid executions are defined based on several orders which are discussed in the following section.
+
+\paragraph{Synchronization Order} \label{synchronization order}
+The synchronization order is a total order of all synchronization actions of an execution - it is consistent with the program order in each thread. Synchronization actions are:
+
+\begin{itemize}
+    \item \textit{locks}: Acquiring a lock, unlocking a lock, or waiting for a condition variable.
+    \item \textit{volatile}: Writing or reading a volatile field.
+    \item \textit{threads}: Starting or stopping a thread, but also the process of initializing variables to their default state before the thread starts.
+\end{itemize}
+
+Java provides the guarantee of ''synchronization order consistency'' - all reads are guaranteed to return the value of the last write in the synchronization order. In other words: Synchronization actions are sequentially consistent.
+
+This alone isn't that useful to programmers though: Because synchronization order consistency only applies to synchronization actions there are no guarantees at all about how normal program actions behave in relation to these synchronization actions.
+
+\paragraph{Synchronizes-with Order} \label{synchronizes-with order}
+The synchronizes-with order describes the dataflow between different threads: The synchronization actions that are write-actions ''synchronize-with'' actions that observe that change i.e. if a thread observes that the value of a volatile field is changed then the write is related to the read in the synchronizes-with order.
+
+\paragraph{Happens-before Order} \label{happens-before order}
+The happens-before order is the most essential order out of all of the ones described here: It is constructed by taking the transitive closure of the program order and the synchronizes-with order. The Java memory model guarantees happens-before consistency in this case: every read can see either the latest write in the happens-before order, or any other write that is not ordered by HB. This allows data races too: If two writes aren't related in the happens-before order they might both provide the value to a read to that field.
+
+Because it includes the program order it actually provides guarantees about actions that aren't synchronization actions too.
+
+The main take-away here is: Don't expect to see data to which the current thread is not related using the synchronizes-with order.
+
 \newpage
 
 %==============================================================================================================================
