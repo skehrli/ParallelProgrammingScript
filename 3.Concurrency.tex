@@ -11,6 +11,7 @@ For every memory location in your program, you must obey at least one of the fol
     \item \textbf{Thread local}: Do not use the location in more than one thread, e.g. by giving each thread its own copy of a resource, provided that threads don't need to communicate through this resource.
     \item \textbf{Immutable}: Do not write to the memory location. You can enforce this by declaring such a variable final.
     \item \textbf{Synchronized}: Use synchronization to control access to the location.
+    \item \textbf{Atomic operations}: Use only atomic operations to ensure that the correct result is obtained in all cases.
 \end{itemize}
 In practice, programmers usually over-synchronize their programs. When writing a concurrent program, you should focus on putting as much as possible in the first two categories, as synchronization is usually very expensive.
 
@@ -113,7 +114,8 @@ We assume only two threads attempt to acquire the lock, one with \texttt{ThreadI
     \includegraphics[scale=0.45]{PetersonLock.png}
 \end{figure}
 It's easy to see that the Peterson Lock satisfies the requirements for correct implementation of a critical section. In fact, it's even starvation-free. One can prove this using a short proof by contradiction.\\[3mm]
-An obvious disadvantage of this implementation is that it only implements mutual exclusion for two threads. In most cases, we are interested in providing mutual exclusion for many more threads. The next section will adapt the Peterson Lock to do just that.
+An obvious disadvantage of this implementation is that it only implements mutual exclusion for two threads. In most cases, we are interested in providing mutual exclusion for many more threads. The next section will adapt the Peterson Lock to do just that.\\
+It should also be noted that the implementation depicted here isn't entirely correct: As we'll see later the Java memory model doesn't give us the guarantee of sequential consistency for writes to elements of array references, therefore a correct implementation would have to utilize the \texttt{AtomicIntegerArray} class, the same applies to several other implementations.
 
 %==============================================================================================================================
 
@@ -173,7 +175,7 @@ When measuring performance, we see that both \texttt{TASLock} and \texttt{TATASL
     \item Calls to \texttt{getAndSet()} and \texttt{set()} force other processors to invalidate their cached copies of the \texttt{state} variable. This means that the next call to \texttt{get()} and \texttt{getAndSet()} will need to read from main memory. Continuing like this, it's easy to see that nearly every call will read from main memory.
     \item Nearly each call reading from main memory also means that the shared bus will be under heavy use. This means that all threads using the bus will be slowed down considerably.
 \end{itemize}
-The \texttt{TATASLock} performs slightly better, as the call to \texttt{get()} still tries to read from the local cached copy.\\[3mm]
+The \texttt{TATASLock} performs slightly better, as the expensive call to \texttt{compareAndSet()} happens less often than in tthe \texttt{TASLock} example.\\[3mm]
 One possibility to alleviate this problem would be to implement an exponential backoff. This means that every time we don't manage to acquire the lock, we wait for a random amount of time $m \in [0,t^x]$, where $x$ is the number of times we've failed to acquire the lock and $t$ is the initial wait time.
 
 \newpage
@@ -189,7 +191,7 @@ As mentioned above, when we have a memory location which is neither thread-local
         \centering
         \includegraphics[scale=0.45]{SynchronizedCounter.png}
     \end{figure}
-    \noindent Note that it's not possible to synchronize on a primitive value. One might be tempted to turn \texttt{cnt} into an \texttt{Integer}, but this would result in erroneous behavior. The reason for this is that primitive wrapper objects such as \texttt{Integer}s are immutable. Therefore, Java will create a new object every time we increment the \texttt{cnt} variable.
+    \noindent Note that it's not possible to synchronize on a primitive value. One might be tempted to turn \texttt{cnt} into an \texttt{Integer}, but this would result in erroneous behavior. The reason for this is that primitive wrapper objects such as \texttt{Integer}s are immutable. Therefore, Java will create a new object every time we increment the \texttt{cnt} variable. The monitor is associated with the object itself and not the reference that is used to access it, assigning to a reference will result in the lock being held on the object that the reference originally referred to.
 \end{example}
 Every Java object, including classes itself, not just their instances, has an associated lock, meaning that we can use it to enforce mutual exclusion using \texttt{synchronized}. We can also include the \texttt{synchronized} in the method signature:
 \begin{center}
