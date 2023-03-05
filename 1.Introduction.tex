@@ -8,8 +8,7 @@
 In this chapter, we want to explore the setting of the course. The final goal of the course is two-fold:\\
 On the one hand, we want to be able to write multi-threaded programs in Java. But we also want to understand general concepts of concurrent programming and how to solve issues that arise with its introduction.\\
 To get there, we first have to understand what a thread even is, how Java threads relate to them and how concurrency is achieved on the OS level.\\
-Hence, before we start writing programs and analyze problems in concurrent programming, we take a look at how a modern OS handles programs and then define the setting the course takes place in. The understanding gained in this chapter will be critical for later topics.
-
+Hence, before we start writing programs and analyze problems in concurrent programming, we take a look at how a modern OS handles programs and then define the setting the course takes place in. Note that this chapter explains multiprocessing in more depth than the course itself. It is not directly exam relevant, but the understanding gained in this chapter will be critical for later topics. At the end of the chapter, there is a short list of terms that are mentioned, but not explicitly explained in the text. When a term is not clear, it may be contained and explained in this list.
 % sources: Thread states in Java: https://docs.oracle.com/javase/8/docs/api/java/lang/Thread.State.html
 % Thread states and diagram: https://www3.ntu.edu.sg/home/ehchua/programming/java/j5e_multithreading.html
 % os basics: processes, threads: https://web.archive.org/web/20201004050736/http://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf
@@ -31,7 +30,6 @@ Going back to the beginning, we had a bunch of programs on disk we wanted to run
 The OS views each running program now as a \textit{process} with an associated \textit{context} or \textit{state}, which includes all the things we mentioned before, like its address space, I/O information and CPU register state.\\[3mm]
 All we need to do now is choose one process and start executing its code on the CPU.
 
-
 \subsubsection{What is a thread now?}
 Most operating systems further divide processes into threads. Further dividing the work of a process makes sense, as large programs have many different tasks that need to be taken care of at the same time. If we think of a running Java program, we need for example a garbage collector running in the background. \\[3mm]
 In an OS that supports threads, each process consists of at least one thread and all threads within the same process share the same address space, that is, can view the same memory. This means that threads of the same process can easily communicate with each other, for example through shared variables. It also means that a thread has less \textit{context} it needs to store than a process. This is because it inherits most of its state from the parent process, like the address space and I/O information. We can think of threads as smaller processes:
@@ -50,8 +48,29 @@ By introducing these OS concepts, the notion of parallelism boils down to how th
 \end{itemize}
 We are concerned only with short-term scheduling in this course and whenever scheduling is mentioned, short-term scheduling is meant. We assume a \textit{pre-emptive scheduler}, which just means that the scheduler can interrupt a thread at any time and swap it out for another thread, even if the thread didn't finish executing all its instructions yet.\\[3mm]
 Descheduling a thread in favour of another is called a \texttt{context switch}. Upon a context switch, the OS has to store the context of the descheduled thread to memory and load the context of the newly scheduled thread from memory to the CPU core the thread is going to run on. This is quite expensive, since it involves writes/reads to main memory and hence the OS does not want to context switch too frequently.\\[3mm]
-We now know how such a context switch can work: Since a thread inherits the address space from its parent process, it only needs to remember the CPU register contents. Note that the CPU registers include special registers like the instruction pointer and the stack pointer. Imagine we now switch out the thread for another (within the same process) and then switch back. Simply restoring these registers is enough to continue its execution with the next instruction, since the thread has the variables both on its stack and in the registers back and knows which instruction to execute next (since stack pointer, instruction pointer and other registers are restored). Note that the exact set of steps needed for such a switch depend on the OS, but generally, this is what is required.\\[3mm]
+Imagine we have a process with three threads and only a single CPU core. Only a single thread can be scheduled at a time, as illustrated here:
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.15]{ShareCPU.png}
+    \caption{Multiple threads context switching on one core.}
+\end{figure}
+When we now have three CPU cores, all of these can be scheduled in parallel. For this to happen, the scheduler first has to schedule the process of the Java program on all three cores (remember, processes \textit{and} threads are scheduled). Then, all threads can run in parallel on separate cores:
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.15]{SeparateCPU.png}
+    \caption{Each thread runs on a separate core.}
+\end{figure}
+
+To context switch, we need to store everything a thread requires to continue executing its code later on. We now know how such a context switch can work: Since a thread inherits the address space from its parent process, it only needs to remember the CPU register contents. Note that the CPU registers include special registers like the instruction pointer and the stack pointer. Imagine we now switch out the thread for another (within the same process) and then switch back. Simply restoring these registers is enough to continue its execution with the next instruction, since the thread has the variables both on its stack and in the registers back and knows which instruction to execute next (since stack pointer, instruction pointer and other registers are restored). Note that the exact set of steps needed for such a switch depend on the OS, but generally, this is what is required.\\[3mm]
 However, switching to a thread within another process is not as straightforward and we need to context switch to the other process first.
+
+% \subsubsection{When does a thread get descheduled?}
+% A thread might get descheduled when:
+% \begin{itemize}
+%   \item A more important thread needs CPU time. For example when a keyboard input is registered, the respective thread quickly requires CPU access and some other thread will need to get descheduled.
+%   \item The thread accesses memory. Since a memory access can take millions of cycles, keeping this thread scheduled while it just waits for the data to arrive from memory is inefficient.
+%         \item The threads CPU time sim
+% \end{itemize}
 
 \subsubsection{Concurrency vs Parallelism}
 When two threads are now scheduled at the same time on different cores, they are executing in \textit{parallel}. However, we say that two threads are running \textit{concurrently}, when their lifetime overlaps. Two threads can run concurrently without ever being scheduled at the same time.\\
@@ -93,11 +112,12 @@ In Java however, the thread library exposed by the language is very closely rela
 We can imagine a Java thread as a sequence of [Java] instructions that are executed sequentially.
 
 \subsubsection{Creating Java Threads}
-We demonstrate three viable methods of creating Threads from within a Java program. When starting such a thread, the JVM will tell the OS to create a new thread. Appreciate that now its run method will be executing concurrently to the main thread.
+We demonstrate three viable methods of creating Java threads from within a Java program. When starting such an object, the JVM will tell the OS to create a new thread within the process of the running Java program. Appreciate that now its run method will be executing concurrently to the main thread in its own OS thread.
 \begin{enumerate}
     \item Create a custom class implementing the runnable interface.
     \begin{minted}[]{java}
     public class myRunnable implements Runnable {
+        @Override
         public void run() {
             /* write code to be executed upon
             starting the thread here
@@ -123,6 +143,7 @@ We demonstrate three viable methods of creating Threads from within a Java progr
     \item Extend the Java Thread class:
     \begin{minted}[]{java}
     public class myThread extends Thread {
+        @Override
         public void run() {
             /* write code to be executed upon
             starting the thread here
@@ -140,6 +161,7 @@ We demonstrate three viable methods of creating Threads from within a Java progr
     \item The most compact method is to create the code that is run by the thread anonymously and inline:
     \begin{minted}[]{java}
     Thread T = new Thread() {
+        @Override
         public void run() {
             /* write code to be executed upon
             starting the thread here
@@ -149,15 +171,18 @@ We demonstrate three viable methods of creating Threads from within a Java progr
     T.start();
     \end{minted}
 \end{enumerate}
+Note that for all these methods, the custom class is just a normal Java class. Which means we can write constructors, other methods and give it fields. The only limitation is that the run method cannot return anything. We can get around that with global variables (remember, threads within the same process see the same memory).
 
 \subsubsection{Daemon vs Non-Daemon Threads}
 Java differentiates daemon threads that are responsible for background tasks like memory management (for example the garbage collector is a daemon thread) and non-daemon threads, which execute the program itself. The main thread is non-daemon and so are all user-created threads by deafult.\\
 A Java program only terminates once all non-daemon threads die. This means in particular that non-daemon threads can continue to run, even when the main() method returned.\\
-Manually created threads are non-daemon by default, but can be made daemon threads using the setDaemon( boolean ) method. This can only be done before the thread is started. In this course however, we will exclusively work with non-daemon threads.
+User-created threads are non-daemon by default. In this course, we will exclusively work with non-daemon threads.
 
 \subsubsection{Setting of this course}
 In this course, we analyze multi-threaded [Java] programs. Where is such a program now located in the context of this chapter?\\
-We are always within a single process (the process of our executing Java program). When we talk about context switches, we usually mean switching from one Java thread to another. But we are also mindful that the system can schedule other processes in between. Our Java threads can run in parallel on different cores, but also concurrently on the same core. This is all decided by the scheduler and out of our control.
+First of all, we are always on a single machine. This course does not cover \textit{distributed} systems consisting of more than one machine. However, the machine we assume usually has multiple cores.\\
+We are usually within a single process (the process of our executing Java program). When we talk about context switches, we usually mean switching from one Java thread to another. But we are also mindful that the system can schedule other processes and threads in between.\\
+We are almost always talking about non-daemon threads, that is, the main thread and user threads. Our Java threads can run in parallel on different cores, but also concurrently on the same core. This is all decided by the scheduler and out of our control.
 
 % \subsubsection{Thread states [2]}
 % If we want to be able to talk about the effects of different thread operations, we need some notion of \textit{thread states}. In short, a Java thread typically goes through the following states:
@@ -193,6 +218,22 @@ We are always within a single process (the process of our executing Java program
 
 \subsection{Summary}
 What is important to remember from this section is that threads are primarly a unit of organization for the OS and are what ultimately runs on the CPU. Their lightweight nature is what enables the scheduler to quickly swap them in and out of the CPU and thus creating the illusion of many programs running at the same time. Although Java threads are created by the JVM rather than the OS, they are 1-to-1 mapped to OS threads and hence we can think about them the same way.
+
+\subsection{What is/are again...}
+\begin{itemize}
+  \item ...\textit{CPU registers}? Registers are a small set (usually about 8-32) of memory locations directly on a CPU core. We cannot access them in a high-level programming language. They are used by the compiler for local variables, as compared to data structures, which are usually placed in the heap. Since registers are directly on the CPU core, they are orders of magnitude faster to access than main memory and even caches.\\
+  The registers used for storing variables are referred to as \textit{general purpose registers}. There are also some special registers, like the instruction pointer (stores the memory address of the instruction to be executed next) and stack pointer (stores the memory address of the top of the stack).
+  \item ...\textit{the heap}? The heap is a contiguous memory region in main memory. Each process has its own heap and uses it for storing datastructures. The heap is actively managed by the system to make sure the space is efficiently used.
+  \item ...\textit{the stack}? The stack is also a contiguous memory region in main memory. Usually, each thread within a process has its own stack. It is not actively managed by the system and thus faster to allocate and deallocate memory from than the heap. The compiler usually puts variables on the stack when all registers are already used.
+  \item ...\textit{an address space}? We mentioned that each process has its own address space. What does this mean? To access a memory location, a process does not use the actual \textit{physical} address, but instead a \textit{virtual} address. We can imagine a virtual layer on top of the memory locations. Each virtual address gets mapped to a physical location when it is used. This means that different processes use a different \textit{virtual} address to refer to the same \textit{physical} address. The advantage of this is that for each process, we can simply slap a virtual layer on top of the memory addresses and to the process it will appear that the memory is empty, since its virtual addresses are not mapped yet. This is why a process cannot access another processes memory: It simply cannot see it.\\
+  This whole concept is known as \textit{virtual memory} and it not part of this course. Just know that when we say a new process gets its own address space, it means that the OS initializes a new empty virtual layer to be filled by the process.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.2]{VirtualMem.png}
+        \caption{Virtual to Physical Address Mapping. https://www.techtarget.com/whatis/definition/virtual-address}
+    \end{figure}
+
+\end{itemize}
 
 \subsection{References}
 [1]: Operating Systems: Three Easy Pieces: Chapter 4; The Abstraction: The Process. Available at: https://web.archive.org/web/20201004050736/http://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf.
