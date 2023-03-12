@@ -8,7 +8,7 @@ top=2cm,%
 bottom=2cm,%
 ]{geometry}%
 \usepackage{tikz}
-\usetikzlibrary{shapes,snakes}
+\usetikzlibrary{shapes,decorations}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{subcaption}
@@ -21,6 +21,7 @@ bottom=2cm,%
 \usepackage{wrapfig}
 \usepackage{multicol}
 \usepackage{transparent}
+\usepackage{minted}
 
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
@@ -29,7 +30,7 @@ bottom=2cm,%
 \hypersetup{
     colorlinks=false,
     linkcolor=blue,
-    filecolor=magenta,      
+    filecolor=magenta,
     urlcolor=cyan,
 }
 
@@ -45,7 +46,7 @@ bottom=2cm,%
      #1
      \\
     }
-    
+
 % Theoreme etc.
 \theoremstyle{plain}
 \newmdtheoremenv[
@@ -84,7 +85,7 @@ bottom=2cm,%
     \renewcommand{\figurename}{Fig.}
     \renewcommand{\contentsname}{Table of Contents}
     \renewcommand{\thesubfigure}{\roman{subfigure}}
-    
+
     \renewcommand{\ExerciseHeaderTitle}{\ExerciseTitle}
     \renewcommand{\ExerciseHeader}{\centerline{\textbf{\large\ExerciseName\ExerciseHeaderNB\ExerciseHeaderTitle\ExerciseHeaderOrigin}}\\}
     \renewcommand{\ExerciseListHeader}{\ExerciseHeaderDifficulty%
@@ -92,46 +93,48 @@ bottom=2cm,%
     \ \ExerciseHeaderTitle \newline}%
     \ExerciseHeaderOrigin\ignorespaces}
     \renewcommand{\AnswerListHeader}{\textbf{\ExerciseHeaderNB. \ \ExerciseHeaderTitle}}
-    \setlength{\Exesep}{1\baselineskip}    
+    \setlength{\Exesep}{1\baselineskip}
     \setlength{\QuestionBefore}{.2em}
     \setlength{\QuestionIndent}{2em}
-    
-    \makeatletter 
+
+    \makeatletter
         \begin{titlepage}
-		\begin{center} 
-		\huge \textbf{Parallel Programming \\ PVW Script}
+		\begin{center}
+		\huge \textbf{Parallel Programming \\ Inofficial Course Script}
 		\\ \bigskip
-		\Large Last Updated: June, 2022
+		\Large Last Updated: March, 2023
 		\\ \bigskip
-		\large Author: Lasse Meinen
-		\\ \bigskip
-		\Large pprog-pvw-skript@vis.ethz.ch
+		% \large Author: Sascha Kehrli
+		% \\ \bigskip
+		% \Large pprog-pvw-skript@vis.ethz.ch
 		\vfill
-		{\transparent{0.1}\includegraphics[width = 0.6\textwidth]{images/spirale_black1000x1000.png}}
+		{\includegraphics[width = 0.3\textwidth]{images/ETH.png}}
 		\vfill
 		\end{center}
 
-		\noindent \textbf{Disclaimer:}\\
-		This  script only serves as additional material for practice purposes and should not serve as a substitute for the lecture material. We neither guarantee that this script covers all relevant topics for the exam, nor that it is correct. If an attentive reader finds any mistakes or has any suggestions on how to improve the script, they are encouraged to contact the authors under the
-		indicated email address or, preferably, through a gitlab issue on https://gitlab.ethz.ch/vis/luk/pvw\_script\_pprog.
+		% \noindent \textbf{Disclaimer:}\\
+		% This  script only serves as additional material for practice purposes and should not serve as a substitute for the lecture material. We neither guarantee that this script covers all relevant topics for the exam, nor that it is correct. If an attentive reader finds any mistakes or has any suggestions on how to improve the script, they are encouraged to contact the authors under the
+		% indicated email address or, preferably, through a gitlab issue on https://gitlab.ethz.ch/vis/luk/pvw\_script\_pprog.
 	\end{titlepage}
     \makeatother
     \thispagestyle{empty}
     \newpage
 
     \setcounter{page}{1} %Start the actual document on page 1
-    
+
     \tableofcontents
     \newpage
     \subfile{1.Introduction}
     \newpage
-    \subfile{2.Parallelism}
-    \newpage
-    \subfile{3.Concurrency}
-    \newpage
-    \subfile{4.AdditionalTopics}
-    \newpage
-    \subfile{5.FurtherReading}
-    \subfile{6.Changelog}
-    \newpage
+    \subfile{2.ThreadCommunication}
+    % \newpage
+    % \subfile{2.Parallelism}
+    % \newpage
+    % \subfile{3.Concurrency}
+    % \newpage
+    % \subfile{4.AdditionalTopics}
+    % \newpage
+    % \subfile{5.FurtherReading}
+    % \subfile{6.Changelog}
+    % \newpage
 \end{document}

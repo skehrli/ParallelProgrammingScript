@@ -188,38 +188,6 @@ First of all, we are always on a single machine. This course does not cover \tex
 We are usually within a single process (the process of our executing Java program). When we talk about context switches, we usually mean switching from one Java thread to another. But we are also mindful that the system can schedule other processes and threads in between.\\
 We are almost always talking about non-daemon threads, that is, the main thread and user-created threads. Our Java threads can run in parallel on different cores, but also concurrently on the same core. This is all decided by the scheduler and out of our control.
 
-% \subsubsection{Thread states [2]}
-% If we want to be able to talk about the effects of different thread operations, we need some notion of \textit{thread states}. In short, a Java thread typically goes through the following states:
-% \begin{itemize}
-%     \item \textit{New}: Once the \texttt{Thread} object is created, the thread enters the new state. At this point, the thread is just an object in the heap and no resources have been allocated for it.
-%     \item \textit{Runnable}: Once we call \texttt{start()} on the new thread object, the system allocates resources to enable its execution and the thread becomes eligible for being scheduled.
-%     \item \textit{Running}: When the thread is actually scheduled to run.
-%     \item \textit{Not runnable}: We use this as an umbrella state for multiple states that cause the thread to not be runnable. The thread enters this state when one of the following events occur:
-%         \begin{enumerate}
-%             \item The sleep() method is called to suspend the thread for a specified amount of time to yield control to the other threads.
-%             \item The wait() method is called to wait for a specific condition to be satisfied.
-%             \item The thread is blocked and waiting for an I/O operation to be completed. Attempting to acquire a lock and calling join() will also cause a thread to be blocked, but these two topics will be covered later on.
-%         \end{enumerate}
-%     These methods and terms will be covered in the next chapter. At this point we just note that even though our Java threads are scheduled by the OS, we still have \textit{some} control over them from the language itself.
-%     \item \textit{Terminated}: A thread transitions to terminated state when the run() method terminates and exits.
-% \end{itemize}
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[scale=0.8]{ThreadLifeCycle.png}
-% \end{figure}
-% There is a getState() method in Java returning one of the states \textit{new}, \textit{runnable}, \textit{blocked}, \textit{waiting}, \textit{timed waiting} and \textit{terminated}:
-% \begin{minted}[]{java}
-% Thread T = new Thread() {
-%     public void run() {
-%         System.out.println(Thread.currentThread().getState());
-%     }
-% };
-% T.start();
-
-% > RUNNABLE // prints the state to the console
-% \end{minted}
-% We notice that Java differentiates some states we simply put into a \textit{not runnable} state. Later in the script we are going to introduce additional concepts related to these states and mention the state diagram again.
-
 \subsection{Summary}
 What is important to remember from this section is that threads are primarily a unit of organization for the OS and are what ultimately runs on the CPU. Their lightweight nature is what enables the scheduler to quickly swap them in and out of the CPU and thus creating the illusion of many programs running at the same time. Although Java threads are created by the JVM rather than the OS, they are (usually) 1-to-1 mapped to OS threads and hence we can think about them the same way.
 
