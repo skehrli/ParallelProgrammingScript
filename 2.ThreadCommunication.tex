@@ -786,7 +786,7 @@ At the beginning of this chapter we talked about thread states and specifially a
     \caption{Java Thread State Diagram. Credit: https://konradreiche.com/}
 \end{figure}
 \subsubsection{The Timed Waiting State}
-This is similar in behaviour to the normal waiting state. Methods that cause a state transition to the timed waiting:
+This is similar in behaviour to the normal waiting state. Methods that cause a transition to the timed waiting state:
 \begin{itemize}
   \item Object.wait(long timeout): This causes the thread to wait on the Object monitor until either the timer elapses or another thread calls notify()/notifyAll() on the monitor.
   \item Thread.sleep(long millis): This method causes the Thread object to pause execution for the specified number of milliseconds. Note that this thread cannot be woken up by any notify(). The method does not have anything to do with monitors, wait() and notify().
@@ -794,13 +794,13 @@ This is similar in behaviour to the normal waiting state. Methods that cause a s
 \end{itemize}
 There are also other methods leading to this transition, but we will not work with them for the remainder of this course. Note that the specified wait times are not guaranteed to be exact, as the underlying OS is responsible for the timing.
 \subsubsection{Java Thread States vs OS Thread States}
-A question that might come to mind is whether these states are just defined and managed by Java or if they also exist on the OS level. The answer is that in most operating systems, these states also exist. However, Java does not specify how it maps Java thread states to OS thread states. Java leaves this open to the specific JVM implementation. This makes sense, since different JVMs run on different underlying operating systems, which can differ greatly.
+A question that might come to mind is whether these states are just defined and managed by Java or if they also exist on the OS level. The answer is that in most operating systems, thread states similar to the Java thread states exist. However, Java does not specify how it maps Java thread states to OS thread states. Java leaves this open to the specific implementation. This makes sense, since different JVMs run on different underlying operating systems, which can differ greatly.
 \subsubsection{State Transitions in wait()/notify()}
 Let us now specifically focus on the thread state transitions occuring in wait()/notify():
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.8]{WaitNotifyStates.png}
-    \caption{Java Thread State Diagram. Credit: https://konradreiche.com/}
+    \caption{State Transitions Using wait()/notify(): https://www3.ntu.edu.sg/home/ehchua/programming/\\java/j5e\_multithreading.html}
 \end{figure}
 A running thread (owning a monitor) calling wait() will release the monitor and change to a waiting state. The waiting thread will not continue executing its code until notified by another thread (except for the discussed rare spurious wakeups). Note here that the thread is in a waiting state on the Java language level. It may or may not actually be transitioned to a waiting state on the OS level. The difference is that if it is in a waiting state on the OS level, it will not be scheduled until notified (or spuriously woken up). But Java could also decide to implement the call to wait() as a busy wait, in which case the underlying OS thread is still scheduled (to execute its busy wait instructions). This mapping is not specified in the Java documentation and is implementation dependent.\\
 Upon being notified, the thread changes to a blocked state, because before being runnable, the thread needs to reacquire the monitor. This blocked state can be imagined as the waiting area for the monitor.\\
