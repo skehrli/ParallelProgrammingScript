@@ -77,7 +77,7 @@ t.start();
 
 > RUNNABLE // prints the state to the console
 \end{minted}
-We notice that Java differentiates some states we simply put into a \textit{not runnable} state. These roughly correspond to the three reasons we mentioned for entering a not runnable state. We need to introduce a few more topics before we can differentiate these properly. For the moment, just appreciate that we have the power of putting our running Java Thread objects into a certain state resulting in the underlying OS thread not getting scheduled.
+A list and short description of each state can be found in the \href{https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Thread.State.html}{official Java documentation}. We notice that Java differentiates some states we simply put into a \textit{not runnable} state. These roughly correspond to the three reasons we mentioned for entering a not runnable state. We need to introduce a few more topics before we can differentiate these properly. For the moment, just appreciate that we have the power of putting our running Java Thread objects into a certain state resulting in the underlying OS thread not getting scheduled.
 
 \subsection{Waiting for Another Thread}
 \subsubsection{Busy Waiting}
