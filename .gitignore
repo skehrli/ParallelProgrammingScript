@@ -26,3 +26,6 @@
 *.fls
 *.sublime-project
 *.sublime-workspace
+
+_minted*
+main.pdf
