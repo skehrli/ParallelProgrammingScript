@@ -46,8 +46,13 @@ We call the (actual real-time) order that instructions of multiple threads are e
 Note that interleavings do not necessarily refer to the interleaving of Java instructions, but rather the interleaving of the machine instructions that are compiled from the Java code.\\
 We will soon discuss solutions to the problem (which is waiting for the helper thread to finish in this case) and other approaches to control the execution of our Java threads. But first, we have to talk about thread states in Java.
 
+<<<<<<< Updated upstream
 \subsection{Thread States [2]}
 Even though we said in the previous chapter that Java threads are 1-to-1 mapped to OS threads, we can still control our Java threads from within our program. The Java Thread library exposes many tools for managing running threads to the programmer. For example we have various methods that cause a thread not to be scheduled by the OS. To be able to talk about the effects of different thread operations, we need some notion of \textit{thread states}. A Java thread typically goes through the following states:
+=======
+\subsection{Thread States}
+Even though we said in the previous chapter that Java threads are 1-to-1 mapped to OS threads, we can still control our Java threads from within our program. The Java Thread library exposes many tools for managing running threads to the programmer. For example do we have various methods that cause a thread not to be scheduled by the OS. To be able to talk about the effects of different thread operations, we need some notion of \textit{thread states}. A Java thread typically goes through the following states:
+>>>>>>> Stashed changes
 \begin{itemize}
     \item \textit{New}: Once the Thread object is created, the thread enters the new state. At this point, the thread is just an object in the heap and no resources have been allocated for it.
     \item \textit{Runnable}: Once we call \texttt{start()} on the new thread object, the system allocates resources to enable its execution and the thread becomes eligible for being scheduled.
@@ -81,7 +86,11 @@ A list and short description of each state can be found in the \href{https://doc
 
 \subsection{Waiting for Another Thread}
 \subsubsection{Busy Waiting}
+<<<<<<< Updated upstream
 Consider the program from \ref{interleavings} again. Our issue was that the main thread did not wait until the other thread completed. A solution to this is to check in a while-loop if the other thread already terminated. With our new knowledge about Java thread states, we can check the state of \texttt{Thread t} using the \texttt{getState()} method. When the while condition fails, we can finally print:
+=======
+Consider the program from 2.1 again. Our issue was that the main thread did not wait until the other thread completed. A solution to this is to check in a while-loop if the other thread already terminated. With our new knowledge about Java thread states, we can check the state of Thread t using the getState() method. When the while condition fails, we can finally print:
+>>>>>>> Stashed changes
 \begin{minted}[]{java}
 public void printSmallest(int[] a, int[] b) {
     Thread t = new Thread() {
@@ -138,11 +147,17 @@ Arrays.sort(b)
 \end{minted}
 \textbf{Solution}: This code still works, but it is slower. This is because as soon as the main thread calls \texttt{t.join()} it will not be scheduled anymore until \texttt{t} terminates. Only then will it sort the array 'b'. This means that first, array 'a' is sorted and then array 'b', which is no improvement over sequential code.
 
+<<<<<<< Updated upstream
 \subsubsection{Busy Waiting vs Joining}
 We mentioned the drawbacks of busy waiting (waiting thread gets scheduled, taking away CPU time). However, joining is not always better. Calling \texttt{join()} can result in a context switch: The thread will be descheduled and some other thread will be scheduled in its stead (maybe the helper thread - but maybe a different one altogether).\\
 When this context switch takes more time than the work of the joined thread, we would have been better off just busy waiting. So, for a very short-lived thread, it may be more efficient to simply busy wait than to call \texttt{join()}. However, in almost all cases, calling \texttt{join()} will be better.
+=======
+\subsubsection{Busy Waiting vs join()}
+We mentioned the drawbacks of busy waiting (waiting thread gets scheduled, taking away CPU time). However, joining is not always better. Calling join() can result in a context switch: The thread will be descheduled and some other thread will be scheduled in its stead (maybe the helper thread - but maybe a different one altogether).\\
+When this context switch takes more time than the work of the joined thread, we would have been better off just busy waiting. So, for a very short-lived thread, it may be more efficient to simply busy wait than to call join(). However, in almost all cases, calling join() will be better.
+>>>>>>> Stashed changes
 
-\subsection{Interrupting a thread}
+\subsection{Interrupting a Thread}
 % \subsubsection{Interrupting a running thread}
 \subsubsection{interrupt() on a Runnable Thread}
 Assume that \texttt{t} is a Java Thread object in the following.\\
@@ -553,7 +568,7 @@ Note that for the code to work, we define the SumThread class as a nested class 
 
 \subsection{Producer-Consumer Scenario: Wait/Notify}
 \subsubsection{Problems with Synchronized}
-The next issue we want to tackle is a producer-consumer scenario. This occurs for example if we have a data structure some threads are writing to and others are reading from. We know by now that when multiple threads access the same data, we need to properly synchronize in order to prevent race conditions.\\[3mm]
+The next issue we want to tackle is a producer-consumer scenario. This occurs for example if we have a datastructure some threads are writing to and others are reading from. We know by now that when multiple threads access the same data, we need to properly synchronize in order to prevent race conditions.\\[3mm]
 Consider following two thread classes; a producer and a consumer class:
     \begin{figure}[H]
         \begin{subfigure}{.52\textwidth}
@@ -817,6 +832,7 @@ public final synchronized void join() throws InterruptedException {
     }
 }
 \end{minted}
+<<<<<<< Updated upstream
 Suppose that Thread object \texttt{t1} calls \texttt{t2.join()}. The following happens now (assuming our system uses OpenJDK):
 \begin{enumerate}
     \item The calling thread \texttt{t1} acquires the monitor of \texttt{t2}.
@@ -825,6 +841,17 @@ Suppose that Thread object \texttt{t1} calls \texttt{t2.join()}. The following h
     \item Upon terminating, \texttt{t2} notifies on its monitor, causing \texttt{t1} to return from a waiting state. You may ask where \texttt{notify()} is called. In the OpenJDK implementation, it is called in an internal method when \texttt{t2} is terminating.
 \end{enumerate}
 This is the code that is executed when calling \texttt{join()} (without specifying a timeout) in OpenJDK. Note that this is just one specific implementation of Java, and there are others, like the OracleJDK. We are just looking at this code to get an idea of how \texttt{join()} can be implemented, but we cannot assume that every Java implementation executes equivalent code.
+=======
+This is the code that is executed when calling join() (without specifying a timeout) in OpenJDK (an open-source Java implementation). Suppose that Thread object t1 calls t2.join(). The following happens now (assuming our system uses OpenJDK):
+\begin{enumerate}
+  \item The calling thread t1 acquires the monitor of t2 (because of the synchronized keyword).
+  \item t1 checks if t2 is not yet terminated (using isAlive()).
+  \item t1 calls t2.wait(). This transitions t1 to a waiting state.
+  \item Upon terminating, t2 notifies on its monitor, causing t1 to return from a waiting state. You may ask where notify() is called. In the OpenJDK implementation, it is called in an internal method, which itself is called when t2 is terminating.
+\end{enumerate}
+Hence, the thread calling join() transfers into a waiting state (this is guaranteed for any Java implementation).\\
+Note that this is just one specific implementation of Java, and there are others, like the OracleJDK. Using wait() to implement join() is common, but we cannot assume that every Java implementation executes equivalent code.
+>>>>>>> Stashed changes
 
 % \subsection{Questions That Might Come Up While Reading}
 % These are questions that are not directly relevant for the course, but might help understand some concepts better.
