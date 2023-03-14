@@ -20,9 +20,12 @@
 *.mtc
 *.mtc1
 *.out
-*.synctex.gz
+*.synctex*
 *.thm
 *.fdb_latexmk
 *.fls
 *.sublime-project
 *.sublime-workspace
+
+_minted*
+main.pdf

@@ -34,6 +34,17 @@ bottom=2cm,%
     urlcolor=cyan,
 }
 
+\usepackage[compact]{titlesec}
+
+% solution to add `subsubsubsection` from https://tex.stackexchange.com/questions/60209/how-to-add-an-extra-level-of-sections-with-headings-below-subsubsection
+\setcounter{secnumdepth}{4}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\newcommand{\subsubsubsection}[1]{\paragraph{#1}}
+
 \urlstyle{same}
 
 \graphicspath{ {./images/} }
