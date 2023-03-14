@@ -30,7 +30,7 @@ Going back to the beginning, we had a bunch of programs on disk we wanted to run
 The OS views each running program now as a \textit{process} with an associated \textit{context} or \textit{state}, which includes all the things we mentioned before, like its address space, I/O information and CPU register state.\\[3mm]
 All we need to do now is choose one process and start executing its code on the CPU.
 
-\subsubsection{What is a thread now?}
+\subsubsection{What is a Thread Now?}
 Most operating systems further divide processes into threads. Further dividing the work of a process makes sense, as large programs have many different tasks that need to be taken care of at the same time. If we think of a running Java program, we need for example a garbage collector running in the background. \\[3mm]
 In an OS that supports threads, each process consists of at least one thread and all threads within the same process share the same address space, that is, can view the same memory. This means that threads of the same process can easily communicate with each other, for example through shared variables. It also means that a thread has less \textit{context} it needs to store than a process. This is because it inherits most of its state from the parent process, like the address space and I/O information. We can think of threads as smaller processes:
 \begin{figure}[H]
@@ -182,7 +182,7 @@ Java differentiates daemon threads that are responsible for background tasks lik
 A Java program only terminates once all non-daemon threads die. This means in particular that non-daemon threads can continue to run, even when the main() method returned.\\
 User-created threads are non-daemon by default. In this course, we will exclusively work with non-daemon threads.
 
-\subsubsection{Setting of this course}
+\subsubsection{Setting of this Course}
 In this course, we analyze multi-threaded [Java] programs. Where is such a program now located in the context of this chapter?\\
 First of all, we are always on a single machine. This course does not cover \textit{distributed} systems consisting of more than one machine. However, the machine we assume usually has multiple cores.\\
 We are usually within a single process (the process of our executing Java program). When we talk about context switches, we usually mean switching from one Java thread to another. But we are also mindful that the system can schedule other processes and threads in between.\\
@@ -191,7 +191,7 @@ We are almost always talking about non-daemon threads, that is, the main thread 
 \subsection{Summary}
 What is important to remember from this section is that threads are primarily a unit of organization for the OS and are what ultimately runs on the CPU. Their lightweight nature is what enables the scheduler to quickly swap them in and out of the CPU and thus creating the illusion of many programs running at the same time. Although Java threads are created by the JVM rather than the OS, they are (usually) 1-to-1 mapped to OS threads and hence we can think about them the same way.
 
-\subsection{What is/are again...}
+\subsection{What is/are Again...}
 \begin{itemize}
   \item ...\textit{CPU registers}? Registers are a small set (usually about 8-32) of memory locations directly on a CPU core. We cannot access them in a high-level programming language. They are used by the compiler for local variables, as compared to data structures, which are usually placed in the heap. Since registers are directly on the CPU core, they are orders of magnitude faster to access than main memory and even caches.\\
   The registers used for storing variables are referred to as \textit{general purpose registers}. There are also some special registers, like the instruction pointer (stores the memory address of the instruction to be executed next) and stack pointer (stores the memory address of the top of the stack).
