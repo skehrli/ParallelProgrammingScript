@@ -294,7 +294,9 @@ We keep in mind that the machine does not actually execute bytecode (this gets i
 We have identified that the increment instruction is a \textit{critical section}. A critical section is a piece of code that only a \textit{single} thread can execute at the same time to guarantee correct (parallel) execution.
 
 \subsubsection{Concept of a Lock}
-\textbf{Locks Provide Mutual Exclusion:}\\
+
+\subsubsubsection{Locks Provide Mutual Exclusion:}
+
 Once we identified a critical section, we must ensure that only one thread can enter it at the same time. This property of the critical section that we are seeking is referred to as \textit{mutual exclusion}. Java allows us to do this using \textit{locks} (although locks are a general concept used in many programming languages, not just Java).\\
 We can imagine that upon entering a critical section, we need to lock it such that no one else can enter. When the section is over, we unlock it again such that other threads can enter. The logic is shown in the following pseudocode:
 \begin{minted}[]{java}
@@ -310,8 +312,10 @@ synchronized(lock) {
     // insert critical section code here
 }
 \end{minted}
-We can neatly wrap the critical section in a synchronized block.\\[3mm]
-\textbf{Intrinsic Lock or Monitor}\\
+We can neatly wrap the critical section in a synchronized block.
+
+\subsubsubsection{Intrinsic Lock or Monitor}
+
 Note that the synchronized block always requires an object as an argument. It might seem alien, but in Java we can use \textit{any} object as a lock. We say that each object in Java has an \textit{intrinsic lock}. There is no real intuition behind why this is the case. It is just a convenient implementation decision the language designers made. The intrinsic lock is also called a \textit{monitor lock} or simply \textit{monitor}. In Java, there are also external locks available, which we will see later. But for our current needs, the intrinsic object locks are enough.\\[3mm]
 In our ParallelSum code, the critical section was the increment, which means we only have to wrap it in a synchronized block. We also do not need to specifically create an object to lock on; we can simply use the ParallelSum object instance - the 'this' object.
 \begin{minted}[]{java}
@@ -753,7 +757,9 @@ A producing thread does the following:
 The methods are correct now, no bad interleavings are possible anymore.
 
 \subsubsection{notifyAll()}
-We learned that calling \texttt{notify()} wakes up a single thread out of the set of threads that called \texttt{wait()} on the same monitor. However, this does not always work, especially since we cannot control which of the threads gets woken up. Imagine in our producer-consumer example, we had a second consumer thread class, which only consumes when the buffer has at least 20 elements:
+
+We learned that calling \texttt{notify()} wakes up a single thread out of the set of threads that called \texttt{wait()} on the same monitor.  The Java documentation states that the thread woken up by \texttt{notify()} is arbitrary.\\
+Calling \texttt{notify()} hence does not always work as expected, especially since we cannot control which of the threads gets woken up. Imagine in our producer-consumer example, we had a second consumer thread class, which only consumes when the buffer has at least 20 elements:
 \begin{minted}[]{java}
 synchronized(buffer) {
     while(buffer.size() < 20) {
@@ -766,8 +772,8 @@ synchronized(buffer) {
     };
 }
 \end{minted}
-If we now call \texttt{notify()} from a producing thread, we do not know what kind of consumer thread wakes up. If there are threads of both kinds waiting and one demanding at least 20 elements is woken up, it acquires the monitor, sees that there are less than 20 elements in the buffer and calls \texttt{wait()} again. Now a consumer thread (requiring only one element) could perform work, but is still waiting. In this situation, we are hence forced to call buffer.notifyAll(). This of course wakes up all threads that previously called buffer.wait().\\
-When there are a lot of threads waiting for a monitor, calling \texttt{notifyAll()} is very expensive. All of the waiting threads are woken up and compete for the lock, using up precious CPU time. Hence we call \texttt{notifyAll()} only when necessary. Which is when we cannot guarantee that any thread that called \texttt{wait()} can continue its work.
+If we now call \texttt{notify()} from a producing thread, we do not know what kind of consumer thread wakes up. If there are threads of both kinds waiting and one demanding at least 20 elements is woken up, it acquires the monitor, sees that there are less than 20 elements in the buffer and calls \texttt{wait()} again. Now a consumer thread (requiring only one element) could perform work, but is still waiting. In this situation, we are hence forced to call \texttt{buffer.notifyAll()}. This of course wakes up all threads that previously called \texttt{buffer.wait()}.\\
+When there are a lot of threads waiting for a monitor, calling \texttt{notifyAll()} is very expensive. All of the waiting threads are woken up and compete for the lock, using up precious CPU time. Hence we call \texttt{notifyAll()} only when necessary. Which is when we cannot guarantee that no matter which thread (that called \texttt{wait()}) is woken up, its condition will be satisfied.
 
 \subsubsection{Always \texttt{wait()} in a While-Loop}
 Do we even need the while-loop to check the condition in our example? Let us replace the while with an if:
@@ -782,15 +788,15 @@ synchronized(buffer) {
 The logic does make sense at first glance. We check if the buffer is empty. If it is, we wait until a producing thread notifies us. Since there is only one \texttt{notify()} in our code; directly after a producing thread adds to the buffer, the notified thread should be able to perform its removal without rechecking whether the buffer is empty. However, there are multiple reasons why the condition for a wait must be in a while-loop:
 \begin{enumerate}
     \item \textit{Spurious wakeups}: A waiting thread can get woken up without any \texttt{notify()} having occured. If there is no while-loop, the thread now moves on without checking the condition again (which did not change). These events are called spurious wakeups and the reason they occur is buried deep in the OS. An easy answer is that they are hard (and expensive) to prevent. Hence the OS just allows them for performance reasons and also because allowing them does not pose a big inconvenience to the programmer; the conditions must be checked in a while-loop anyways because of the following reasons.
-    \item Imagine two consumer threads (which wait for the buffer to not be empty) are notified by a buffer.notifyAll() call. Both queue to obtain the monitor. One goes first, removes the element and releases the monitor. The buffer is now empty again. Now the second thread obtains the monitor and tries to remove an element (without checking the condition again), throwing an exception.
+    \item Imagine two consumer threads (which wait for the buffer to not be empty) are notified by a \texttt{buffer.notifyAll()} call. Both queue to obtain the monitor. One goes first, removes the element and releases the monitor. The buffer is now empty again. Now the second thread obtains the monitor and tries to remove an element (without checking the condition again), throwing an exception.
     \item Waiting threads might have different conditions to check. In above example, we had threads waiting for a different number of elements in the buffer. If they do not check their condition again after being notified, they might continue even though their condition is not met (the \texttt{notify()} or \texttt{notifyAll()} was meant for the condition of another thread).
 \end{enumerate}
 
 \subsection{Thread States Revisited}
-At the beginning of this chapter we talked about thread states and specifially about a \textit{not runnable} state. Having introduced monitors, \texttt{wait()}/notify() and \texttt{join()}, we can now further divide this state. Consider the new state diagram.
+At the beginning of this chapter we talked about thread states and specifially about a \textit{not runnable} state. Having introduced monitors, \texttt{wait()}/\texttt{notify()} and \texttt{join()}, we can now further divide this state. Consider the new state diagram.
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.2]{ThreadStateDiagram.png}
+    \includegraphics[scale=0.22]{ThreadStateDiagram.png}
     \caption{Java Thread State Diagram. Credit: https://konradreiche.com/}
 \end{figure}
 \subsubsection{The Timed Waiting State}
@@ -800,18 +806,20 @@ This is similar in behaviour to the normal waiting state. Methods that cause a t
     \item \texttt{Thread.sleep(long millis)}: This method causes the Thread object to pause execution for the specified number of milliseconds. Note that this thread cannot be woken up by any \texttt{notify()}. The method does not have anything to do with monitors, \texttt{wait()} and \texttt{notify()}.
     \item \texttt{Thread.join(long millis)}: This causes the calling thread to wait for either the timer to expire or the joined thread to terminate (whichever happens first).
 \end{itemize}
-There are also other methods leading to this transition, but we will not work with them for the remainder of this course. Note that the specified wait times are not guaranteed to be exact, as the underlying OS is responsible for the timing.
+Note that the \texttt{Object.wait(long timeout)} and \texttt{Object.join(long timeout)} are overloads of the usual \texttt{wait()} and \texttt{join()} we already know. When we give a \texttt{long} as an argument to those methods, the thread will go to the \texttt{timed waiting} state instead of a \texttt{waiting} state. There are also other methods leading to this transition, but we will not work with them for the remainder of this course. Note that the specified wait times are not guaranteed to be exact, as the underlying OS is responsible for the timing.
 \subsubsection{Java Thread States vs OS Thread States}
 A question that might come to mind is whether these states are just defined and managed by Java or if they also exist on the OS level. The answer is that in most operating systems, thread states similar to the Java thread states exist. However, Java does not specify how it maps Java thread states to OS thread states. Java leaves this open to the specific implementation. This makes sense, since different JVMs run on different underlying operating systems, which can differ greatly.
-\subsubsection{State Transitions in \texttt{wait()}/notify()}
+
+\subsubsection{State Transitions in \texttt{wait()}/\texttt{notify()}}
+
 Let us now specifically focus on the thread state transitions occuring in \texttt{wait()}/\texttt{notify()}:
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.8]{WaitNotifyStates.png}
     \caption{State Transitions Using \texttt{wait()}/\texttt{notify()}: https://www3.ntu.edu.sg/home/ehchua/programming/\\java/j5e\_multithreading.html}
 \end{figure}
-A running thread (owning a monitor) calling \texttt{wait()} will release the monitor and change to a waiting state. The waiting thread will not continue executing its code until notified by another thread (except for the discussed rare spurious wakeups). Note here that the thread is in a waiting state on the Java language level. It may or may not actually be transitioned to a waiting state on the OS level. The difference is that if it is in a waiting state on the OS level, it will not be scheduled until notified (or spuriously woken up). But Java could also decide to implement the call to \texttt{wait()} as a busy wait, in which case the underlying OS thread is still scheduled (to execute its busy wait instructions). This mapping is not specified in the Java documentation and is implementation dependent.\\
-Upon being notified, the thread changes to a blocked state, because before being runnable, the thread needs to reacquire the monitor. This blocked state can be imagined as the waiting area for the monitor.\\
+A running thread (owning a monitor) calling \texttt{wait()} will release the monitor and change to a \texttt{waiting} state. The waiting thread will not continue executing its code until notified by another thread (except for the discussed rare spurious wakeups). Note here that the thread is in a waiting state on the Java language level. It may or may not actually be transitioned to a waiting state on the OS level. The difference is that if it is in a waiting state on the OS level, it will not be scheduled until notified (or spuriously woken up). But Java could also decide to implement the call to \texttt{wait()} as a busy wait (for example), in which case the underlying OS thread is still in some runnable state and scheduled (to execute its busy wait instructions). This mapping between Java and OS thread states is not specified in the Java documentation and is implementation dependent.\\
+Upon being notified, the thread changes to a \texttt{blocked} state, because before being runnable, the thread needs to reacquire the monitor. This blocked state can be imagined as the waiting area for the monitor.\\
 When the monitor is acquired, the thread goes back to a runnable state and once scheduled will continue with the next instruction after the call to \texttt{wait()}.
 
 \subsubsection{State Transitions in \texttt{join()}}
