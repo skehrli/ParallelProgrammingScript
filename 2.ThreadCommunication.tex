@@ -390,7 +390,7 @@ public synchronized void method2() {
     // some code
 }
 \end{minted}
-Both methods are part of the same class. When a thread now calls \texttt{method()}, it needs to also call \texttt{method2()} and obtain the monitor of the 'this' object - which it already has. Thankfully, this is allowed in Java. A thread can obtain a lock an arbitrary number of times. But to release it again, the thread needs to release it just as many times as it acquired it. Hence we say that object monitors in Java are \textit{reentrant}.
+\noindent Both methods are part of the same class. When a thread now calls \texttt{method()}, it needs to also call \texttt{method2()} and obtain the monitor of the 'this' object - which it already has. Thankfully, this is allowed in Java. A thread can obtain a lock an arbitrary number of times. But to release it again, the thread needs to release it just as many times as it acquired it. Hence we say that object monitors in Java are \textit{reentrant}.
 
 % show that synchronizing two methods leads to threads not being able to
 
@@ -438,7 +438,7 @@ class SumThread extends Thread {
     \end{subfigure}
     \caption{Skeleton of a ParallelSum class.}
 \end{figure}
-The class does not have a constructor. Instead, we pass the array \texttt{arr} we want to sum and the desired number of threads as arguments to the sum method. All we are doing at this point is saving \texttt{arr} and \texttt{numThreads} to class attributes and creating an array of \texttt{Thread} objects.\\
+\noindent The class does not have a constructor. Instead, we pass the array \texttt{arr} we want to sum and the desired number of threads as arguments to the sum method. All we are doing at this point is saving \texttt{arr} and \texttt{numThreads} to class attributes and creating an array of \texttt{Thread} objects.\\
 The \texttt{Thread} class we created does not yet do anything. But we already gave the \texttt{Thread} objects IDs from \texttt{0} to \texttt{numThreads - 1}. You can think for yourself how that could help us implement the desired pattern.\\[3mm]
 Next, we need to actually implement the run method of the threads. We want each thread to sum up its indices locally and then add this sum to the global sum. To do so, we implement a sumUp method, which takes the ID of the \texttt{Thread} object (the one we gave it in the constructor) as an argument and sums the corresponding indices. Another \texttt{increaseSum()} method increments the counter by a specified amount:
 
@@ -493,7 +493,7 @@ class SumThread extends Thread {
     \end{subfigure}
     \caption{Flawed implementation of ParallelSum.}
 \end{figure}
-Does the sum method work how we intend it to? Are there any race conditions or other concurrency bugs? Try to find mistakes in the code before reading on.\\[3mm]
+\noindent Does the sum method work how we intend it to? Are there any race conditions or other concurrency bugs? Try to find mistakes in the code before reading on.\\[3mm]
 The first thing you should notice is that the threads are not joined. The main thread can return the sum before all helper threads finished their work. This is a race condition.\\[3mm]
 The next problem is that writes to the sum variable also create a race condition. Think about how we can use the synchronize here. What are the critical sections?\\[3mm]
 \textbf{Solution}:
@@ -552,7 +552,7 @@ class SumThread extends Thread {
         \end{minted}
     \end{subfigure}
 \end{figure}
-We only need to synchronize on the increaseSum method, since it is the only critical section. For the sumUp method, each thread has its own localSum variable and there are no concurrent accesses to any data. This code now works as expected.\\
+\noindent We only need to synchronize on the increaseSum method, since it is the only critical section. For the sumUp method, each thread has its own localSum variable and there are no concurrent accesses to any data. This code now works as expected.\\
 Note that for the code to work, we define the SumThread class as a nested class of ParallelSum, since this way the SumThread instances can access the methods and fields of the ParallelSum class. If SumThread is defined externally, this approach does not work.
 
 \subsection{Producer-Consumer Scenario: Wait/Notify}
@@ -591,7 +591,7 @@ public class Producer extends Thread {
             \end{minted}
         \end{subfigure}
     \end{figure}
-Both operate on the same datastructure - a shared buffer which we assume to be unbounded (the producer can add an arbitrary amount of elements). The producer keeps adding elements while the consumer keeps reading them (and perform a long computation with them). The problem is that the consumer can only read if the buffer is not empty. Hence, it checks the condition in a while loop before accessing. Can you see the problem?\\[3mm]
+\noindent Both operate on the same datastructure - a shared buffer which we assume to be unbounded (the producer can add an arbitrary amount of elements). The producer keeps adding elements while the consumer keeps reading them (and perform a long computation with them). The problem is that the consumer can only read if the buffer is not empty. Hence, it checks the condition in a while loop before accessing. Can you see the problem?\\[3mm]
 
 \subsubsubsection{Problem: Race Condition}
 
@@ -612,7 +612,7 @@ Assume we have two consumer threads A and B both executing their \texttt{run()} 
             \end{minted}
         \end{subfigure}
     \end{figure}
-Consider the interleaving of instructions 0,2,1,3. Both threads see that the buffer is not empty. Thread A removes the element first and executes its computation. Thread B also tries to remove, but the buffer is now empty. This will throw an exception. Hence, the while loop checking whether the buffer is empty is a critical section and needs to provide mutual exclusion. Think about which code blocks we need to synchronize.\\[3mm]
+\noindent Consider the interleaving of instructions 0,2,1,3. Both threads see that the buffer is not empty. Thread A removes the element first and executes its computation. Thread B also tries to remove, but the buffer is now empty. This will throw an exception. Hence, the while loop checking whether the buffer is empty is a critical section and needs to provide mutual exclusion. Think about which code blocks we need to synchronize.\\[3mm]
 \subsubsubsection{Problem: Concurrent Remove/Add}
 We start by simply sychronizing the while(buffer.isEmpty()) loop. Consider now a consumer thread A executing the synchronized block. We are guaranteed that no other consumer thread can try to remove elements from the buffer at the same time due to the synchronization. But a producer thread B can add to the buffer at the same time:
 \begin{figure}[H]
@@ -629,7 +629,7 @@ buffer.add(prime)
         \end{minted}
     \end{subfigure}
 \end{figure}
-We do not know the implementation details of the underlying \texttt{UnboundedBuffer} datastructure, but we can assume that it is implemented in a non-trivial way, meaning that an add and remove are compiled to many machine code instructions that can be interleaved in ways that corrupt the datastructure. For example if the datastructure is implemented as a linked list, we can imagine interleavings of the \texttt{add()} and \texttt{remove()} methods where pointers of the list elements are messed up. To make sure nothing bad can happen, we also synchronize the \texttt{buffer.add(prime)} instruction on the buffer monitor. Our final solution using synchronization is the following:
+\noindent We do not know the implementation details of the underlying \texttt{UnboundedBuffer} datastructure, but we can assume that it is implemented in a non-trivial way, meaning that an add and remove are compiled to many machine code instructions that can be interleaved in ways that corrupt the datastructure. For example if the datastructure is implemented as a linked list, we can imagine interleavings of the \texttt{add()} and \texttt{remove()} methods where pointers of the list elements are messed up. To make sure nothing bad can happen, we also synchronize the \texttt{buffer.add(prime)} instruction on the buffer monitor. Our final solution using synchronization is the following:
 \begin{figure}[H]
     \begin{subfigure}{.52\textwidth}
         \begin{minted}[]{java}
@@ -736,7 +736,7 @@ synchronized(buffer) {
         \end{minted}
     \end{subfigure}
 \end{figure}
-Calls to \texttt{notify()} do not have to be placed in a try-catch block.
+\noindent Calls to \texttt{notify()} do not have to be placed in a try-catch block.
 
 \subsubsubsection{Who does notify wake up?}
 
@@ -785,10 +785,10 @@ synchronized(buffer) {
     int prime = buffer.remove();
 }
 \end{minted}
-The logic does make sense at first glance. We check if the buffer is empty. If it is, we wait until a producing thread notifies us. Since there is only one \texttt{notify()} in our code; directly after a producing thread adds to the buffer, the notified thread should be able to perform its removal without rechecking whether the buffer is empty. However, there are multiple reasons why the condition for a wait must be in a while-loop:
+The logic does make sense at first glance. We check if the buffer is empty. If it is, we wait until a producing thread notifies us. Since there is only one \texttt{notify()} in our code (directly after a producing thread adds to the buffer) the notified thread should be able to perform its removal without rechecking whether the buffer is empty. However, there are multiple reasons why the condition for a wait must be in a while-loop:
 \begin{enumerate}
-    \item \textit{Spurious wakeups}: A waiting thread can get woken up without any \texttt{notify()} having occured. If there is no while-loop, the thread now moves on without checking the condition again (which did not change). These events are called spurious wakeups and the reason they occur is buried deep in the OS. An easy answer is that they are hard (and expensive) to prevent. Hence the OS just allows them for performance reasons and also because allowing them does not pose a big inconvenience to the programmer; the conditions must be checked in a while-loop anyways because of the following reasons.
-    \item Imagine two consumer threads (which wait for the buffer to not be empty) are notified by a \texttt{buffer.notifyAll()} call. Both queue to obtain the monitor. One goes first, removes the element and releases the monitor. The buffer is now empty again. Now the second thread obtains the monitor and tries to remove an element (without checking the condition again), throwing an exception.
+    \item \textit{Spurious wakeups}: A waiting thread can get woken up without any \texttt{notify()} having occured. If there is no while-loop, the thread now moves on without checking the condition again, which is undesired behaviour. Such events are called spurious wakeups and the reason they occur is buried deep in the OS. An easy answer is that they are hard (and expensive) to prevent. Hence the OS just allows them for performance reasons and also because allowing them does not pose a big inconvenience to the programmer; the conditions should be checked in a while-loop anyways because of the other listed reasons.
+    \item Imagine two consumer threads (which wait for the buffer to not be empty) are notified by a \texttt{buffer.notifyAll()} call. Both queue to obtain the monitor. One goes first, removes the element and releases the monitor. Since only one element was in the buffer, it is now empty again. Now the second thread obtains the monitor and tries to remove an element, which throws an exception since the buffer is empty. Note that the thread does not check the condition \texttt{buffer.isEmpty()} again after waking up from the \texttt{wait()} call. If we had a while-loop instead of an if-statement, the thread would simply check again if \texttt{buffer.isEmpty()}, see that the buffer is, in fact, empty and call \texttt{wait()} again.
     \item Waiting threads might have different conditions to check. In above example, we had threads waiting for a different number of elements in the buffer. If they do not check their condition again after being notified, they might continue even though their condition is not met (the \texttt{notify()} or \texttt{notifyAll()} was meant for the condition of another thread).
 \end{enumerate}
 
