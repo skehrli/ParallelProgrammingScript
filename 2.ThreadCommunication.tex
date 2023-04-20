@@ -678,6 +678,7 @@ public void run() {
 
         }
         computation(prime);
+    }
 }
 \end{minted}
 \subsubsubsection{Problem: Deadlock}
@@ -762,14 +763,13 @@ We learned that calling \texttt{notify()} wakes up a single thread out of the se
 Calling \texttt{notify()} hence does not always work as expected, especially since we cannot control which of the threads gets woken up. Imagine in our producer-consumer example, we had a second consumer thread class, which only consumes when the buffer has at least 20 elements:
 \begin{minted}[]{java}
 synchronized(buffer) {
-    while(buffer.size() < 20) {
-            buffer.wait(); // this would have to be in a try-catch block
-        }
+    while (buffer.size() < 20) {
+        buffer.wait(); // this would have to be in a try-catch block
     }
     int val = 0;
-    for(int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++) {
         val += buffer.remove();
-    };
+    }
 }
 \end{minted}
 If we now call \texttt{notify()} from a producing thread, we do not know what kind of consumer thread wakes up. If there are threads of both kinds waiting and one demanding at least 20 elements is woken up, it acquires the monitor, sees that there are less than 20 elements in the buffer and calls \texttt{wait()} again. Now a consumer thread (requiring only one element) could perform work, but is still waiting. In this situation, we are hence forced to call \texttt{buffer.notifyAll()}. This of course wakes up all threads that previously called \texttt{buffer.wait()}.\\
@@ -779,7 +779,7 @@ When there are a lot of threads waiting for a monitor, calling \texttt{notifyAll
 Do we even need the while-loop to check the condition in our example? Let us replace the while with an if:
 \begin{minted}[]{java}
 synchronized(buffer) {
-    if(buffer.isEmpty()) {
+    if (buffer.isEmpty()) {
         buffer.wait();
     }
     int prime = buffer.remove();
@@ -813,17 +813,21 @@ A question that might come to mind is whether these states are just defined and 
 \subsubsection{State Transitions in \texttt{wait()}/\texttt{notify()}}
 
 Let us now specifically focus on the thread state transitions occuring in \texttt{wait()}/\texttt{notify()}:
+
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.8]{WaitNotifyStates.png}
     \caption{State Transitions Using \texttt{wait()}/\texttt{notify()}: https://www3.ntu.edu.sg/home/ehchua/programming/\\java/j5e\_multithreading.html}
 \end{figure}
-A running thread (owning a monitor) calling \texttt{wait()} will release the monitor and change to a \texttt{waiting} state. The waiting thread will not continue executing its code until notified by another thread (except for the discussed rare spurious wakeups). Note here that the thread is in a waiting state on the Java language level. It may or may not actually be transitioned to a waiting state on the OS level. The difference is that if it is in a waiting state on the OS level, it will not be scheduled until notified (or spuriously woken up). But Java could also decide to implement the call to \texttt{wait()} as a busy wait (for example), in which case the underlying OS thread is still in some runnable state and scheduled (to execute its busy wait instructions). This mapping between Java and OS thread states is not specified in the Java documentation and is implementation dependent.\\
+
+\noindent A running thread (owning a monitor) calling \texttt{wait()} will release the monitor and change to a \texttt{waiting} state. The waiting thread will not continue executing its code until notified by another thread (except for the discussed rare spurious wakeups). Note here that the thread is in a waiting state on the Java language level. It may or may not actually be transitioned to a waiting state on the OS level. The difference is that if it is in a waiting state on the OS level, it will not be scheduled until notified (or spuriously woken up). But Java could also decide to implement the call to \texttt{wait()} as a busy wait (for example), in which case the underlying OS thread is still in some runnable state and scheduled (to execute its busy wait instructions). This mapping between Java and OS thread states is not specified in the Java documentation and is implementation dependent.\\
 Upon being notified, the thread changes to a \texttt{blocked} state, because before being runnable, the thread needs to reacquire the monitor. This blocked state can be imagined as the waiting area for the monitor.\\
 When the monitor is acquired, the thread goes back to a runnable state and once scheduled will continue with the next instruction after the call to \texttt{wait()}.
 
 \subsubsection{State Transitions in \texttt{join()}}
+
 What state does a thread transition to when calling \texttt{Thread.join()}? To answer this, let us look at a specific Java implementation of the \texttt{join()} method:
+
 \begin{minted}[]{java}
 public final synchronized void join() throws InterruptedException {
     while(isAlive()) {
@@ -831,7 +835,8 @@ public final synchronized void join() throws InterruptedException {
     }
 }
 \end{minted}
-This is the code that is executed when calling \texttt{join()} (without specifying a timeout) in OpenJDK (an open-source Java implementation). Suppose that Thread object \texttt{t1} calls \texttt{t2.join()}. The following happens now (assuming our system uses OpenJDK):
+
+\noindent This is the code that is executed when calling \texttt{join()} (without specifying a timeout) in OpenJDK (an open-source Java implementation). Suppose that Thread object \texttt{t1} calls \texttt{t2.join()}. The following happens now (assuming our system uses OpenJDK):
 \begin{enumerate}
   \item The calling thread \texttt{t1} acquires the monitor of \texttt{t2} (because of the \texttt{synchronized} keyword).
   \item \texttt{t1} checks if \texttt{t2} is not yet terminated (using \texttt{isAlive()}).
