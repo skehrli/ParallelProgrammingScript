@@ -1,18 +1,3 @@
-% thoughts:
-% - we introduce fork/join as simply creating threads to divide the work and then combining the results, without any recursion. but that is not a parallel algo. parallel DnC is though. Maybe we should introduce it as intrinsically recursive. the paper introduces fork/join as parallel versions of DnC.
-% - we say that the joining is combining results. is it? is it not the waiting for them to finish? framework suggests it is.
-% - maybe change the figure of DnC to F/J
-%
-
-
-% - is the argument of forkjoinpool really the max amount
-% of threads?
-% - do I have to shutdown the fjpool?
-% - write comment about the code in fork join
-% - two tricks with cutoff and compute. maybe show them already when we are using threads, else the reader might ask itself
-% - write about cilk
-
-
 \documentclass[main.tex]{subfiles}
 \setlength{\columnsep}{3cm}
 \setcounter{secnumdepth}{3}
@@ -82,9 +67,9 @@ public static int do_sum_rec(int[] arr, int startIdx, int endIdx) {
     \caption{Structure of a Divide-and-Conquer Program.}
 \end{figure}
 \noindent Function calls on the same level in the tree can be executed in parallel. Notice that the tree has a depth logarithmic in the number of array entries. This is much better than what we can achieve by simply dividing up the array between threads.\\
-Although to actually get the logarithmic runtime, we require as many processors as array entries. Else, the threads on the last level cannot all run in parallel. This is not realistic, so we cannot expect logarithmic runtime. But this approach is still superior compared to our initial approach with dividing the array into equal chunks, because it solves two previously mentioned problems:
+Although to actually get the logarithmic runtime, we require as many processors as array entries. Else, the threads on the last level cannot all run in parallel.  But this approach is still superior compared to our initial approach with dividing the array into equal chunks, because it solves two previously mentioned problems:
 \begin{itemize}
-  \item The sequential bottleneck of summing up the partial results is solved since even the result combination is parallelized. We get more speedup, even though a logarithmic runtime is not realistic.
+  \item The sequential bottleneck of summing up the partial results is resolved since even the result combination is parallelized, allowing for more speedup with increasing number of processors.
   \item It is easier to implement more equal load balancing. Consider again a graph as an input datastructure. When a task divides up its assigned vertices on two subtasks, it can also count the number of edges in the two sets and adjust the division accordingly (such that both subtasks get not just a similar amount of vertices, but also a similar amount of edges). This is a much simpler problem than when we have to partition the entire graph on \textit{n} threads in the beginning.
 \end{itemize}
 
@@ -578,13 +563,13 @@ public double[] vectorAdd(double[] arr1, double[] arr2) {
 \noindent This is just a reminder on how to use the fork/join framework. We see that implementing maps is very straightforward and even simpler than implementing reductions, because we do not need to combine the partial results of the subtasks.
 
 \subsubsubsection{Digression: Map/Reduce vs Fork/Join in Distributed Systems}
-We may now think that we have a clear hierarchy, where maps and reductions are high-level patterns that can be exploited by means of fork/join-style programming. However, map/reduce is a paradigm itself and based on maps and reductions. It is the basis of computing in distributed systems, while fork/join is utilized mostly on shared memory systems. Let us elaborate on the difference between these two terms:
+We may now think that we have a clear hierarchy, where maps and reductions are high-level patterns that can be exploited by means of fork/join-style programming. However, there is a paradigm called map/reduce that is based on maps and reductions, although it views maps and reductions a bit differently. Map/reduce is the basis of computing in distributed systems, while fork/join is utilized mostly on shared memory systems. Let us elaborate on the difference between these two terms:
 
 In this course, we focus almost solely on parallel programming within a single computer in a shared memory environment. This means that the different entities partaking in the parallel computing (the processors/cores) share memory and can thus efficiently communicate with each other. There is also \textit{distributed computing} operating on a larger scale with massive datasets, where the entities are called nodes and are usually whole computers. There is no shared memory between the nodes (communication happens by sending messages and is expensive) and data is distributed as well (each node has some part of the data while in shared memory computing, all processors can access the entire data). Hence the paradigms used to parallelize computations are different. While in shared memory computing, fork/join parallelism is popular, map/reduce is the workhorse of distributed computing.
 
-To understand why fork/join does not make so much sense in distributed computing, let us introduce an analogy. We can think of the distributed computing environment as the Holy Roman Empire, where we want to conduct a concensus. The data we operate on are the citizens and each city can be considered a node. The data is not shared, as each city can only count its own inhabitants. So, we would let each city locally count its inhabitants (all cities in parallel) and then let them send their results back to the capital, where the partial results are summed (or \textit{reduced} in map/reduce terms) to the final answer. Generally, everything that can be computed per node is considered a map in distributed map/reduce (even though not strictly a map according to our definition) and only when we have to combine the partial results of each node we call it a reduction.
+To understand why fork/join does not make so much sense in distributed computing, let us introduce an analogy. We can think of the distributed computing environment as the Holy Roman Empire, where we want to conduct a concensus. The data we operate on are the citizens and each city can be considered a node. The data is not shared, as each city can only count its own inhabitants. So, we would let each city locally count its inhabitants (all cities in parallel) and then let them send their results back to the capital, where the partial results are summed (or \textit{reduced}) to the final answer. Generally, everything that can be computed per node is considered a map in distributed map/reduce (even though not strictly a map according to our definition) and only when we have to combine the partial results of each node we call it a reduction.
 
-A divide-and-conquer approach would not make much sense here. Cities would have to exchange their results with each other and sum them, but considerable distances would have to be covered to communicate these results between cities. It requires much less communication and is more efficient to just let each city send a representative to the capital once. Note however that each city can be considered a shared memory environment itself and can parallelize its local counting using a divide-and-conquer approach.
+A divide-and-conquer approach would not make much sense here. Cities would have to exchange their results with each other and sum them, but considerable distances would have to be covered to communicate these results between cities. It requires much less communication and is more efficient to just let each city send a representative to the capital once. Note however that each city can be considered a shared memory environment itself and can parallelize its local counting (where communication is cheaper) using a divide-and-conquer approach.
 
 This example is not a perfect analogy, but it gives us sufficient intuition on why fork/join and map/reduce coexist as paradigms - they are designed to exploit parallelism in different environments and on a different scale.\\[3mm]
 To conclude, map/reduce makes sense as a paradigm in distributed systems since communication between nodes is expensive and should be minimized. Hence, divide-and-conquer is usually not efficient. Instead, a more course-grained approach towards parallelism is taken by dividing large datasets on different computers (or nodes), letting each operate on its own chunk of data (to perform maps and generate partial results) and when its necessary reduce these partial results to a single node again.
@@ -597,12 +582,10 @@ Stencils are often used in image processing in the form of filters. The canonica
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.2]{AverageFilter.png}
-    \caption{In Green is the Output Value corresponding to the Yellow Input Value and its Surrounding.}
+    \caption{In Green is the Output Value corresponding to the Yellow Input Value and its Surrounding: https://miro.medium.com/v2/resize:fit:1148/format:webp/1*-NVjiEYLFVOdRbxkihA8Qg.png}
 \end{figure}
 
 Stencils can be parallelized just as maps, since each output element can be computed independently. We need to make sure to not perform the computation in-place, else we might read elements as input that are actually already computed output. So, usually, the result needs to be a new collection.
-
-% then, cover prefixsum. Where does pack fit in and scan? Then finally quicksort to wrap this motherfucker up.
 
 \subsubsection{Scan}
 A scan is a pattern, where:
@@ -813,7 +796,7 @@ The pack is a more complex pattern than the ones we have seen so far. However, t
 \begin{figure}[H]
     \centering
     \includegraphics[scale=0.13]{Pack.png}
-    % \caption{Structure of a Divide-and-Conquer Program.}
+    \caption{https://link.springer.com/chapter/10.1007/978-1-4842-5574-2\_14/figures/6}
 \end{figure}
 
 \noindent We can do the pack in three steps:
@@ -843,11 +826,11 @@ Having learned to parallelize multiple patterns, we try to apply some of them to
 
 \noindent We can trivially parallelize the recursive left and right sort using the fork/join framework. However, since partitioning the data is in \(\mathcal{O}(n)\), we cannot get a span better than \(\mathcal{O}(n)\). In order to improve this bound, we need to parallelize the data partitioning part.
 
-To do so, let us think about what we really need to do to partition the array. All elements less than the pivot need to be selected and put to the \textit{left} in the array, while all elements greater than the pivot need to be selected and put to the \textit{right} in the array. However, if we allow this to not be performed in-place, this can be achieved with two packs: We pack all elements less than the pivot into a new array and all elements greater than the pivot into another new array. Then, we can combine those back into the original array and put the pivot element between them. Thanks to our parallel pack algorithm, this is means \(\mathcal{O}(log(n))\) span to partition the array with \(\mathcal{O}(n)\) additional memory because the packs are not in-place.
+To do so, let us think about what we really need to do to partition the array. All elements less than the pivot need to be selected and put to the \textit{left} in the array, while all elements greater than the pivot need to be selected and put to the \textit{right} in the array. However, if we allow this to not be performed in-place, this can be achieved with two packs: We pack all elements less than the pivot into a new array and all elements greater than the pivot into another new array. Then, we can combine those back into the original array and put the pivot element between them. Thanks to our parallel pack algorithm, this means \(\mathcal{O}(log(n))\) span to partition the array with \(\mathcal{O}(n)\) additional memory because the packs are not in-place.
 
-Our recursion equation becomes \(T(n)=\mathcal{O}(log(n))+T\left(\frac{n}{2}\right)=\mathcal{O}(log^{2}(n))\), a great asymptotic improvement over the sequential \(\mathcal{O}(n*log(n))\).
+Our recursion equation becomes \(T(n)=\mathcal{O}(log(n))+T\left(\frac{n}{2}\right)=\mathcal{O}((log(n))^{2}\), a great asymptotic improvement over the sequential \(\mathcal{O}(n*log(n))\).
 
-We see that a repertoire of some basic parallel patterns helps us effectively parallelize more complex algorithms. Implementing this parallel QuickSort in Java is more involved (remember that we had to code around 100 lines for parallel prefix-sum, which is just a part of the parallel pack, which in turn is just a part of parallel QuickSort) and it is enough for us to realize how it could be done, since parallelizing algorithms in Java is not the main focus of the course.
+We see that a repertoire of some basic parallel patterns helps us effectively parallelize more complex algorithms. Implementing this parallel QuickSort in Java is more involved (remember that we had to code around 80 lines for parallel prefix-sum, which is just a part of the parallel pack, which in turn is just a part of parallel QuickSort) and it is enough for us to realize how it could be done, since parallelizing algorithms in Java is not the main focus of the course.
 
 \subsubsection{Parallelizing Algorithms on Different Datastructures}
 So far, we always assumed arrays as our datastructure. What is so special about arrays though? It is their property of being able to access each element in \(\mathcal{O}(1)\).
@@ -861,7 +844,7 @@ Let us recall what made parallel divide-and-conquer so effective. It was that we
   \item All other vertices on the path correspond to dividing up the data on subtasks and then combining the results. Time required to divide the work depends on the datastructure, so let us say it takes \(\mathcal{O}(Y(n))\). Let us also say that combining results takes \(\mathcal{O}(Z(n))\).
 \end{itemize}
 
-\noindent The time it takes to compute this critical path is thus \(\mathcal{O}\left(log(n)*(Y(n) + Z(n))\ +\ X\right)\), because we have to divide up the data \(log(n)\) times in \(\mathcal{O}(Y(n))\) each, compute the base case once in \(\mathcal{O}(X(n))\) and recombine results in \(\mathcal{O}(Z(n))\) \(log(n)\) times. The time it takes to compute the critical path is by definition the span, so this is also the span of a divide-and-conquer algorithm. Note however that the O-notation means it is an upper bound. In this case, the bound is not tight.
+\noindent The time it takes to compute this critical path is thus \(\mathcal{O}\left(log(n)*(Y(n) + Z(n))\ +\ X\right)\), because we have to divide up the data \(log(n)\) times in \(\mathcal{O}(Y(n))\) each, compute the base case once in \(\mathcal{O}(X)\) and recombine results in \(\mathcal{O}(Z(n))\) \(log(n)\) times. The time it takes to compute the critical path is by definition the span, so this is also the span of a divide-and-conquer algorithm. Note however that the O-notation means it is an upper bound. In this case, the bound is not tight and depending on the functions X, Y and Z, we can get a better bound than the one suggested above.
 
 Since for arrays, dividing up the work is possible in \(\mathcal{O}(1)\), that is, \(Y\equiv 1\), the span of divide-and-conquer algorithms (on arrays) is \(\mathcal{O}(log(n))\) for all operations, for which the base case (X) and recombining results (Z) is in \(\mathcal{O}(1)\). That is the case in particular for reductions and maps.
 

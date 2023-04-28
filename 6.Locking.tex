@@ -1,0 +1,340 @@
+\documentclass[main.tex]{subfiles}
+\setlength{\columnsep}{3cm}
+\setcounter{secnumdepth}{3}
+\usepackage[utf8]{inputenc}
+\begin{document}
+
+\addtolength{\tabcolsep}{-2pt}
+
+\section{Locking}
+In this chapter, we briefly return to the topic of critical section programming. Remember that a critical section is a part of a (multi-threaded) program, which only one thread should execute at a time.
+
+In the previous chapter, our goal was to parallelize algorithms, but we never needed to worry about shared memory and critical sections. This is because of the special structure of divide-and-conquer programs: Although the datastructure was shared, each task had a chunk of the datastructure only it (and its subtasks) accessed. Whenever a subtask was \texttt{fork()}ed, it was also \texttt{join()}ed again and the memory was accessed only after the join completed. Hence, there were never concurrent accesses to a shared memory location. However, there are plenty of programs where memory is shared and concurrent writes to the same data are allowed. So, after focusing on performance (decreasing span) in the previous chapter, we focus on shared memory concurrency again, where correctness is the focus.
+
+\subsection{Approaches Towards Sharing Resources}
+There are three general approaches to take when dealing with shared data across threads:
+
+\begin{enumerate}
+  \item \textbf{Immutability}: The datastructure is simply not allowed to be changed (mutated). That is, no writes are allowed. Concurrent reads are not a problem, so no synchronization is required. We should make our datastructures immutable wherever possible.
+  \item \textbf{Isolated Mutability}: The data is allowed to be changed, but no two threads can access the same memory location. Due to this constraint, we do not need to introduce synchronization and cannot have conflicting accesses. This approach is used in divide-and-conquer, where each thread/task only accesses its assigned part of the datastructure.
+  \item \textbf{Mutable/Shared Data}: The data is freely allowed to be changed with no restrictions. Now, multiple threads can access the same memory locations concurrently and we need to introduce synchronization, which we can do for example by using locks. We now focus on this scenario in this chapter.
+\end{enumerate}
+
+\noindent So, for the rest of the chapter, we assume mutable shared data for which we need to synchronize accesses.
+
+\subsection{Locks}
+When we have shared mutable data, accesses to this data are a critical section. We must ensure that only one thread accesses the data at a time, a property we already introduced as \textit{mutual exclusion}. The mutual exclusion property can be provided by locks in Java. Until now, we always used the Java synchronized keyword, which provides mutual exclusion to a code block by using the \textit{intrinsic lock} or \textit{monitor lock} of objects. Remember that the intrinsic locks allowed us to simply wrap a critical section into a \texttt{synchronized()} block:
+
+\begin{minted}[]{java}
+synchronized(o) { // o is some Object
+    // critical section code
+}
+\end{minted}
+
+\noindent To truly understand how the \texttt{synchronized} keyword relates to locks, let us write pseudo-code of what actually happens here:
+
+\begin{minted}[]{java}
+Lock l = o.getIntrinsicLock(); // pseudo-code, this method doesn't exist
+l.lock();
+/* critical section code
+*/
+l.unlock();
+\end{minted}
+
+\noindent The executing thread obtains the intrinsic lock of the \texttt{Object o} and acquires it. After the critical section is over, the thread releases it again.
+
+We realize that the \texttt{synchronized} keyword provides an abstraction on top of locks. However, we now want the flexibility of (external) locks and go beyond this abstraction. Using external locks, we can get the same semantics with the following code:
+
+\begin{minted}[]{java}
+Lock l = new Lock();
+l.lock();
+/* critical section code
+*/
+l.unlock();
+\end{minted}
+
+\noindent This is now valid Java code, albeit not yet entirely correct (we will soon see why).
+
+While using external locks removes the abstraction layer, it is arguably more intuitive than simply wrapping the critical section into a \texttt{synchronized} block, since it is very descriptive; we acquire some object (the \texttt{Lock}) that no one else can acquire while we hold it, until we release it again. Think of the \texttt{Lock} like a talking stick used in discussions with a lot of people. Only the person holding the stick is allowed to talk and no other person is allowed to speak until he or she acquires the stick. So, when we hold this object, we are guaranteed to be the only one holding it and can thus execute critical section code, like writing to shared data. We will learn later in the course how such locks are actually implemented to guarantee this. At this point, we can simply take locks as a given primitive with the semantics of guaranteeing mutual exclusion.
+
+\subsubsection{Using External Locks vs Intrinsic Locks}
+Before we can appreciate the benefits of using external locks over the intrinsic ones (intrinsic ones are used by the \texttt{synchronized} keyword), let us introduce an example: As systems engineers, we have to design a banking system for the struggling JVM (Java Virtual Money Bank). To start, we write a simple \texttt{transferMoney(Account from, Account to, int amount)} method:
+
+\begin{minted}[]{java}
+public class BankingSystem {
+    public boolean transferMoney(Account from, Account to, int amount) {
+        if (from.getBalance() < amount || to.getBalance() + amount < 0) {
+            return false;
+        } else {
+            from.setBalance(from.getBalance() - amount);
+            to.setBalance(to.getBalance() + amount);
+        }
+        return true;
+    }
+}
+
+interface Account {
+    public int getBalance();
+    public void setBalance();
+}
+\end{minted}
+
+\noindent The \texttt{transferMoney} method checks whether the charged account has enough balance and if it does, sets the balance of the two accounts accordingly. If we use this code with multiple threads and transfer money concurrently, all sorts of bad interleavings can occur. Try to find some possibilites of bad interleaving that would be allowed without any synchronization.
+
+With our previous knowledge, the approach to fix this is to simply decorate the method with the \texttt{synchronized} keyword:
+
+\begin{minted}[]{java}
+public synchronized boolean transferMoney(Account from, Account to, int amount) {
+    if (from.getBalance() < amount || to.getBalance() + amount < 0) {
+        return false;
+    } else {
+        from.setBalance(from.getBalance() - amount);
+        to.setBalance(to.getBalance() + amount);
+    }
+    return true;
+}
+\end{minted}
+
+\noindent This approach prevents any bad interleavings. If you found some bad interleavings that were possible before, try to reconstruct why they are not possible anymore.
+
+A possible scenario without synchronization is for example that two threads transfer from some \texttt{Account a} with balance 10 to \texttt{Account b} concurrently. That is, both threads execute the function call \texttt{transferMoney(a, b, 10)} concurrently. A possible interleaving is that both threads find that \texttt{a} has sufficient balance and then both decrease the balance by 10, leading to negative balance for \texttt{a}, which should not be allowed.
+
+How would we now create the same effect using external locks? Try to write down the code yourself. The approach is quite straightforward: We create a \texttt{Lock} object as a field of the \texttt{BankingSystem} class and acquire it at the beginning of the \texttt{transferMoney} method:
+
+\begin{minted}[]{java}
+public class BankingSystem {
+    private Lock lk = new Lock();
+
+    public boolean transferMoney(Account from, Account to, int amount) {
+        lk.lock();
+        try {
+          if (from.getBalance() < amount || to.getBalance() + amount < 0) {
+              return false;
+          } else {
+              from.setBalance(from.getBalance() - amount);
+              to.setBalance(to.getBalance() + amount);
+          }
+        } finally {
+            lk.unlock();
+        }
+        return true;
+    }
+}
+\end{minted}
+
+\noindent Notice the try-finally-block. The purpose of this is that the finally-block is executed in any case, either when the try-block finished or when an exception occurred in the try-block. If we do not put the \texttt{lk.unlock()} in a finally-block, the thread causing an exception does not release the lock and thus blocks all threads waiting for it. Unlocking the lock again is critical. Using \texttt{synchronized}, we never had to think about this, because the monitor lock was released automatically at the end of the \texttt{synchronized} block. Apart from the try-finally-block, the  modifications in this snippet should not be a big surprise.
+
+\subsubsection{Are Java \texttt{Lock}s reentrant?}
+Locks provide mutual exclusion, meaning only ever one thread can hold it at any point in time. Remember that for intrinsic locks, we mentioned that they are reentrant. This means that a thread holding a monitor lock can acquire it multiple times (for example with nested \texttt{synchronized} blocks or by calling another \texttt{synchronized} method from within a \texttt{synchronized} block). When we simply instantiate a \texttt{Lock} object in Java, this is not going to be a reentrant lock:
+
+\begin{minted}[]{java}
+Lock lk = new Lock(); // this lock is not reentrant
+\end{minted}
+
+\noindent However, the Java lock library provides a \texttt{ReentrantLock} class that has the reentrant property and can else be used in the same way we have used the \texttt{Lock} class before.
+
+\begin{minted}[]{java}
+ReentrantLock lk = new ReentrantLock(); // this lock is reentrant
+\end{minted}
+
+When a thread acquires a \texttt{ReentrantLock} n times, it also needs to release it n times again to make it available for other threads again. Internally, this is implemented with a counter; when a thread acquires a \texttt{ReentrantLock} it already obtained, the lock incremenents an internal counter. Each \texttt{unlock()} decrements the counter. The lock is only available for other threads when the counter reached 0.
+
+\begin{minted}[]{java}
+ReentrantLock lk = new ReentrantLock(); // this lock is reentrant
+lk.lock(); // obtain the lock
+lk.lock(); // increment the internal counter to 2
+lk.unlock(); // decrement internal counter to 1. Lock unavailable for other threads
+lk.unlock(); // decrement counter to 0. Lock now available for other threads
+\end{minted}
+
+\subsubsection{Concluding \texttt{Locks} vs. \texttt{Synchronized}}
+Let us list some of the usability differences between the \texttt{Lock} API and the \texttt{synchronized} keyword in a table:\\
+
+\begin{center}
+    \begin{tabular} { | p {2 cm} | p {5 cm} | p {5 cm} | }
+        \hline
+        & \texttt{Synchronized}  & \texttt{Lock} API  \\
+        \hline
+        Acquire & Automatic (when block begins) & Manually (call to \texttt{lk.lock()})\\
+        \hline
+        Release & Automatic (after block ends) & Manually (call to \texttt{lk.unlock()})\\
+        \hline
+        Scope & Limited by synchronized block. & From \texttt{lk.lock()} to \texttt{lk.unlock()} (can range across method calls). \\
+        \hline
+        Reentrant? & Yes & Only \texttt{ReentrantLock} class. \\
+        \hline
+    \end{tabular}
+\end{center}
+
+\noindent Arguably the key difference between the two is the flexibility. Being able to \texttt{lock()} and \texttt{unlock()} from anywhere allows us for example to obtain a lock in a method and release in a different one. It also allows us to release the locks in an order different than the reverse acquire order:
+
+\begin{minted}[]{java}
+Lock lk = new Lock();
+Lock lk2 = new Lock();
+lk.lock();
+lk2.lock();
+lk.unlock();
+lk2.unlock();
+\end{minted}
+
+\noindent With \texttt{synchronized}, this is impossible. Whenever we have nested synchronized blocks, the monitor locks are acquired in some order and released in reverse order:
+
+\begin{minted}[]{java}
+sychronized(o) { // obtain monitor lock of o
+    sychronized(o2) { // obtain monitor lock of o2
+        /* some code */
+    } // release monitor lock of o2
+} // release monitor lock of o
+\end{minted}
+
+\noindent Later in the course we will make use of this. At this point, we just note that external locks are more flexible than using the \texttt{synchronized} keyword.
+
+\subsection{Locking Granularity}
+Granularity refers to how much functionality a lock guards. In our banking system, we use the same lock for the entire system. That is, no matter between what accounts a transfer happens, the thread executing this transfer would simply acquire a \textit{global} lock. Such an approach is called \textit{coarse-grained} locking, because the lock guards the entire banking system functionality. When a thread wants to do a transfer, it acquires this lock and hence all other threads wanting to execute any transfer will have to wait for this thread to finish and release the lock again.
+
+We could also have a different lock for each account object. Then, a thread would acquire the locks of the two accounts it wants to make a transfer between. Here, the locks guard \textit{less} functionality, since other threads wanting to transfer money between two different accounts could still do so in parallel, because these other accounts are guarded by their own locks. This approach is called \textit{fine-grained} locking.
+
+\subsubsection{\texttt{BankingSystem} with Fine-Grained Locking}
+When we want to implement this fine-grained locking in our \texttt{BankingSystem} example, we need to modify the \texttt{Account} class. Specifically, we need to:
+
+\begin{itemize}
+  \item Define a \texttt{Lock} class attribute to have a lock for each \texttt{Account} instance..
+  \item Provide a \texttt{getLock()} method that returns the \texttt{Lock} of the \texttt{Account} instance.
+\end{itemize}
+
+\noindent Let us write down the code for this:
+
+\begin{minted}[]{java}
+public class Account {
+    private Lock lk = new Lock();
+
+    public Lock getLock() {
+        return this.lk;
+    }
+    ...
+}
+\end{minted}
+
+\noindent Now we can rewrite the \texttt{transferMoney} method in the \texttt{BankingSystem} class:
+
+\begin{minted}[]{java}
+public boolean transferMoney(Account from, Account to, int amount) {
+    from.getLock().lock();
+    to.getLock().lock();
+    try {
+        if (from.getBalance() < amount || to.getBalance() + amount < 0) {
+            return false;
+        } else {
+            from.setBalance(from.getBalance() - amount);
+            to.setBalance(to.getBalance() + amount);
+        }
+    } finally {
+        from.getLock().unlock();
+        to.getLock().unlock();
+    }
+    return true;
+}
+\end{minted}
+
+\noindent This looks simple enough. Basically, we just have to acquire and release two locks (one per account involved) instead of one. With this approach, we can get potentially get much more parallelism if we have a large banking system with a lot of concurrent transfers happening and we had to add very few additional code. This code is not entirely correct however. There is a possibility of a bad interleaving for certain concurrent transfers. Try to find it.
+
+\subsubsection{Hidden Bugs with Fine-Grained Locking}
+The problem with above code is that a deadlock can occur if we have for instance the following concurrent function calls:
+
+\begin{minted}[]{java}
+transferMoney(a, b, 100); // imagine this runs in thread t1
+transferMoney(b, a, 100); // concurrently, this runs in thread t2
+\end{minted}
+
+\noindent If you did not yet find what can go wrong, consider again how a deadlock can happen with these two concurrent function calls.
+
+\noindent Consider the following interleaving:
+
+\begin{figure}[H]
+    \begin{subfigure}[t]{.6\textwidth}
+        \texttt{t1}:
+        \begin{minted}[]{java}
+a.getLock().lock(); // 1.
+
+b.getLock().lock(); // 3.
+        \end{minted}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.6\textwidth}
+        \texttt{t2}:
+        \begin{minted}[]{java}
+
+b.getLock().lock(); // 2.
+
+a.getLock().lock(); // 4.
+        \end{minted}
+    \end{subfigure}
+\end{figure}
+
+\noindent Note that for \texttt{t1}, we have \texttt{from == a} and \texttt{to == b} and for \texttt{t2} the other way around, which is the problem here. The following is happening:
+
+\begin{enumerate}
+  \item \texttt{t1} acquires the lock of \texttt{Account a}.
+  \item texttt{t2} acquires the lock of \texttt{Account b}.
+  \item \texttt{t1} wants to acquire the lock of \texttt{Account b}, which \texttt{t2} already holds. \texttt{t1} is blocked until \texttt{t2} releases the lock on \texttt{b}.
+  \item \texttt{t2} wants to acquire the lock of \texttt{Account a}, which \texttt{t1} already holds. We have reached a deadlock, since both threads wait for the other to release its lock, which results in a circular dependence with no way out.
+\end{enumerate}
+
+\noindent This requires a very specific interleaving that will in practice occur extremely rarely, which means the bug is hard to find when testing, which is the danger of fine-grained locking.
+
+Think about how this can be circumvented. The first thought might be to introduce some deadlock detection, such that one thread releases its lock again when such a scenario occurs. However, such a solution is hard to test, results in complex code and is prone to errors itself. A simple solution to prevent this is to introduce a global ordering on the accounts (for example by account number). Then, we would always lock the account with the smaller account number first. Now, a circular dependence is not possible anymore (to see this, try to find concurrent function calls that enforce a deadlock. You will see that it is not possible to get circular dependencies).\\
+In Java, we can implement such an ordering by giving IDs to the accounts:
+
+\newpage
+
+\begin{minted}[]{java}
+class Account implements Comparable<Account> {
+    private int id;
+    private int balance;
+
+    public int getId() {
+        return this.id;
+    }
+    ...
+}
+\end{minted}
+
+\noindent Now we can make use of this in the \texttt{transferMoney} method:
+
+\begin{minted}[]{java}
+public  boolean transferMoney(Account from, Account to, int amount) {
+    Account first, second;
+
+    // account with the smaller id will be locked first
+    if (to.getId() > from.getId()) {
+        first = from;
+        second = to;
+    } else {
+        first = to;
+        second = from;
+    }
+
+    // rest of code is the same
+    first.getLock().lock();
+    second.getLock().lock();
+    try {
+        if (from.getBalance() < amount || to.getBalance() + amount < 0) {
+            return false;
+        } else {
+            from.setBalance(from.getBalance() - amount);
+            to.setBalance(to.getBalance() + amount);
+        }
+    } finally {
+        first.getLock().unlock();
+        second.getLock().unlock();
+    }
+    return true;
+ }
+
+\end{minted}
+
+\noindent We simply fix the order of the accounts (always first lock the one with the smaller account number) and then execute the same code as before. The previously mentioned deadlock problem is now solved.
+
+\subsubsection{Concluding Locking Granularity}
+We can see that fine-grained locking allows for more parallelism, but it also requires more work to ensure correct behaviour. In general, it is wise to start with coarse-grained locking and to try improving parallelism by moving to more fine-grained locking later, when \textit{contention} becomes an issue. In our banking system example, fine-grained locking only provides an advantage if many transfers happen in parallel and hence threads have to wait often. If there is no contention and concurrent transfers are rare, there is not much to be gained by moving to fine-grained locking. On the contrary, it is prone to introducing hard-to-detect bugs, like the possible deadlock we previously saw.
+
+\end{document}
