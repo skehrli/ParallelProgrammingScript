@@ -856,4 +856,42 @@ Not all is bad though. Consider a long computation that takes \(\mathcal{O}(X)\)
 \subsubsubsection{Balanced Trees}
 Divide-and-conquer parallelism works well in balanced trees. Imagine we want to sum all elements in the tree. Dividing up the work can be done by forking the left and right child to process in parallel. Dividing up the work hence takes \(\mathcal{O}(1)\) and we get \(\mathcal{O}(h)\) span, where h is the height of the tree. In balanced trees, this is logarithmic in n.
 
+\newpage
+
+\subsection{Exercises}
+
+\begin{ExerciseList}
+    \Exercise[title={Task Graph}, label=TG]. \quad The following figure shows the task graph for an algorithm. The number in each node denotes the execution time per task. What is the maximum overall achievable speedup that can be achieved by parallelism when the algorithm runs once compared to sequential execution? How many processors are required to achieve this speedup?
+        \begin{figure}[h]
+            \centering
+            \includegraphics[scale=0.7]{TaskGraph.png}
+        \end{figure}
+    \Answer[ref={TG}].\quad The formula for speedup is $S_P = \frac{T_1}{T_P}$. We know that $T_1$ is the simply the sum of the execution times of all nodes, i.e. $T_1 = 100$. We also know that the best-possible execution time achievable through parallelization is limited by the length of the critical path. The critical path has length 75, i.e. $T_\infty$ = 75. Inserting these values into the formula for speedup gives us:
+        \begin{equation*}
+            S_\infty = \frac{T_1}{T_\infty} = \frac{100}{75} \approx 1.33
+        \end{equation*}
+        We find that two processors are enough to achieve this speedup.
+        \pagebreak
+
+    \Exercise[title={Fork/Join Framework},label=FJW].\quad Given an array of integers, your task is to find the maximum subarray sum among all possible subarrays. For example,
+    \begin{center}
+        \{2, -4, \textbf{1, 9, -6, 7}, -3\} $\rightarrow$ 11 (marked in \textbf{bold})
+    \end{center}
+    Extend the following class such that it computes the maximum subarray sum as described above.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[scale=0.45]{MaxSubArraySum.png}
+    \end{figure}
+    \pagebreak
+    \Answer[ref={FJW}].\quad We stick to the generic recipe for the Fork/Join framework. The difficulty with this exercise is the merging of the results of the two subtasks, as the maximum subarray sum might contain elements of both array partitions. We therefore need to additionally compute the maximum subarray sum which crosses the middle border and return the maximum of the three sums.
+        \begin{figure}[H]
+            \centering
+            \includegraphics[scale=0.55]{MaxSubArraySumForkJoin_Sol.png}
+        \end{figure}
+
+\end{ExerciseList}
+\newpage
+\subsection{Solutions}
+\shipoutAnswer
+
 \end{document}

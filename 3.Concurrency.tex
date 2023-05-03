@@ -2,7 +2,6 @@
 
 \begin{document}
 
-
 \section{Concurrency}
 In the introductory chapter, we saw how several threads accessing the same objects can lead to incorrect or undesirable executions and dubbed such cases \textbf{data races}. In this chapter, we'll first define the term mutual exclusion and the properties that can be associated with mutual exclusion. We'll then implement mutual exclusion as locks.\\
 To widen our understanding of mutual exclusion implementations, we'll have a look at some of the more high-level synchronization primitives such as semaphores and barriers. Implementing what we've learned, we'll then look at different strategies of implementing concurrent data structures, moving from locked structures to lock-free structures. After having seen some of the challenges of lock-free programming, we'll finally close with the introduction of some basic concurrency theory, which could help us show that our concurrent object is indeed correct or see how strong a certain synchronization primitive is.\\[3mm]

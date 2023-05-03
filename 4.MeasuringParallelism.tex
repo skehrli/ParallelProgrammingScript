@@ -111,9 +111,43 @@ We can now follow \textit{Gustafson's law}.
     \end{align*}
 \end{theorem}
 We can see this result directly from the figure. Let us normalize the runtime (on \textbf{P} processors) to one. We simply ask ourselves how long it takes a single processor to execute all the work that the \textbf{P} processors do. And this work is given by the equation $W_P = \mathbf{f} * W + P * (1 - \mathbf{f}) * W$. So, a single processor needs to execute the parallel part \textbf{P} times and the sequential part once. We can visualize the speedup now as all the green parts plus one red part stacked on top of each other (runtime on one processor) versus just one red and one green part (runtime on \textbf{P} processors, because all the other green parts are computed in parallel and thus do not add to the runtime).
-
 If we again consider a program where 25\% is non-parallelizable, we get a speedup of 4 already when we increase the number of processors to 5.
 
 It has to be noted that Gustafson's law is only formulated for a certain class of problems where problem size can be scaled when additional computational resources are available. For example Amdahl's law might be better applicable to problems like sorting a fixed set of integers, but Gustafson's law could be used to describe the problem of rendering a 3D-scene as detailed as possible - the level of detail can be increased in the case of 3D-rendering, but there is no such thing as sorting a set of integers in a more exact way.
+
+\subsection{Exercises}
+\begin{ExerciseList}
+    \Exercise[title={Amdahl's Law, Gustafson's Law, Performance},label=AGL].
+        \Question Suppose a computer program has a method \textbf{M} that cannot be parallelized, and that this method accounts for 40\% of the program’s execution time. What is the limit for the overall speedup that can be achieved by running the program on an n-processor multiprocessor machine according to \nameref{Amdahl's Law}?
+        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to Amdahl's Law (assuming best possible speedup)?
+        \Question The analysis of a program has shown a speedup of 5 when running on 15 cores. What is the serial fraction according to \nameref{Gustafson's Law}?
+    \Answer[ref={AGL}].
+        \Question We see that the program has a serial fraction of at least 40\%. Therefore, we set $\mathbf{f} \geq 0.4$ and insert this into the formula specified by Amdahl's Law:
+            \begin{equation*}
+                S_P \leq \frac{1}{\mathbf{f} + \frac{1-\mathbf{f}}{P}} = \frac{1}{0.4 + \frac{0.6}{P}} \xrightarrow{P \rightarrow \infty} \frac{1}{0.4} = 2.5
+            \end{equation*}
+        \Question Assuming best possible speedup, Amdahl's Law tells us the following holds true
+            \begin{gather*}
+                S_P = 5 = \frac{1}{\mathbf{f}+\frac{1-\mathbf{f}}{P}} = \frac{1}{\mathbf{f}+\frac{1-\mathbf{f}}{15}} \\
+                \Longleftrightarrow\\
+                5 \mathbf{f} + \frac{1-\mathbf{f}}{3} = 5 \mathbf{f} - \frac{1}{3} \mathbf{f} + \frac{1}{3} = 1\\
+                \Longleftrightarrow\\
+                \mathbf{f} = \frac{1}{7}
+            \end{gather*}
+        \Question Gustafson's Law tells us the following holds true
+            \begin{gather*}
+                S_P = \mathbf{f} + P (1 - \mathbf{f})
+                    = \mathbf{f} + 15 (1 - \mathbf{f})
+                    = 5 \\
+                \Longleftrightarrow\\
+                14 \mathbf{f} = 10\\
+                \Longleftrightarrow\\
+                \mathbf{f} = \frac{5}{7}
+            \end{gather*}
+
+\end{ExerciseList}
+\newpage
+\subsection{Solutions}
+\shipoutAnswer
 
 \end{document}

@@ -846,17 +846,4 @@ public final synchronized void join() throws InterruptedException {
 Hence, the thread calling \texttt{join()} transfers into a \texttt{waiting} state (this is guaranteed for any Java implementation).\\
 Note that this is just one specific implementation of Java, and there are others, like the OracleJDK. Using \texttt{wait()} to implement \texttt{join()} is common, but we cannot assume that every Java implementation executes equivalent code.
 
-% \subsection{Questions That Might Come Up While Reading}
-% These are questions that are not directly relevant for the course, but might help understand some concepts better.
-% \begin{itemize}
-%         \item We talked about thread state diagrams. Are these states managed by the JVM or by the OS itself?
-% \end{itemize}
-
-% \subsection{Terminology}
-% The most important definitions of this chapter are stated here to be used as a look-up table.
-% \begin{itemize}
-%   \item \textbf{Deadlock} describes a situation where two or more threads are blocked forever waiting for each other.
-%   \item \textbf{Spurious wakeup} occurs when a waiting thread is woken up without being notified. One of the reasons we need to check the condition for a wait() call in a while-loop (instead of an if-statement).
-%   \item \textbf{Critical section} is a piece of code that only one thread should be executing at a time (mutual exclusion required).
-% \end{itemize}
 \end{document}

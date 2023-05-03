@@ -3,8 +3,6 @@
 \begin{document}
 
 \section{How concurrency is achieved: Processes and Threads}
-\subsection{Disclaimer}
-% Make reference to useful learning materials such as Herlihy, Sophormic Intro and lecture slides/exercises
 In this chapter, we want to explore the setting of the course. The final goal of the course is two-fold:\\
 On the one hand, we want to be able to write multi-threaded programs in Java. But we also want to understand general concepts of concurrent programming and how to solve issues that arise with its introduction.\\
 To get there, we first have to understand what a thread even is, how Java threads relate to them and how concurrency is achieved on the OS level.\\
@@ -15,7 +13,7 @@ Hence, before we start writing programs and analyze problems in concurrent progr
 
 \subsection{Threads and Processes from the OS Perspective}
 A modern computer can run hundreds of programs at the same time with only a few cores. The operating system sits between these programs and the hardware and is responsible for making this work. On a high level, the OS first needs some way of organising these programs to get them ready for execution. It can then run a program for a bit, stop it, run another for a bit and so forth, creating the illusion of many programs running at the same time. We look at how this is achieved in more detail and discuss some important concepts.
-\subsubsection{What is a process? [1]}
+\subsubsection{What is a process?}
 To start, we take a look at the lifecycle of a running program. Before the program is started, it is just a liveless collection of bits that sits on disk.\\
 When we now start this program, the OS will make it come to live and view it as a \textit{process}. To achieve this, the OS loads the code and static data of the program from disk to main memory.
 \begin{figure}[H]
@@ -207,66 +205,4 @@ What is important to remember from this section is that threads are primarily a 
 
 \end{itemize}
 
-\subsection{References}
-[1]: Operating Systems: Three Easy Pieces: Chapter 4; The Abstraction: The Process. Available at: https://web.archive.org/web/20201004050736/http://pages.cs.wisc.edu/~remzi/OSTEP/cpu-intro.pdf.
-% [2]: https://www3.ntu.edu.sg/home/ehchua/programming/java/j5e_multithreading.html
-
-% TODO:
-% - Add Java methods for controlling threads: Sleep, interrupt, join... also then explain how they relate to the state model
-% - Maybe first give some more intuition on how to use threads with examples.
-% - find a diagram for SMT to add a digression section`'
-% - incorporate last slide of L03-05: Summary of thread states
-
-
-% \subsection{Bad Interleavings and Data Races}
-% A \textit{race condition} is a mistake in your program such that whether the program behaves correctly or not depends on the order in which the threads execute. Race conditions are very common bugs in concurrent programming that, by definition, do not exist in sequential programming. We distinguish two types of race conditions.\\[3mm]
-% One kind of race condition is a \textit{bad interleaving}. The key point is that ''what is a bad interleaving'' depends entirely on what you are trying to do. Whether or not it is okay to interleave two bank-account withdraw operations depends on some specification of how a bank is supposed to behave.
-% \begin{example}
-%     Suppose we have the following implementation of a \texttt{peek} operation on a concurrent stack.
-%     \begin{figure}[H]
-%         \centering
-%         \includegraphics[scale=0.45]{peekWrong.png}
-%     \end{figure}
-%     \noindent Assume that the \texttt{pop} and \texttt{push} methods are implemented correctly. While \texttt{peek} might look like it's implemented correctly, the following interleaving might occur:
-%     \begin{figure}[H]
-%         \centering
-%         \begin{subfigure}{.5\textwidth}
-%             \centering
-%             \includegraphics[scale=0.45]{BadInterleaving_1.png}
-%             \captionsetup{labelformat=empty}
-%             \caption{Thread 1 (\texttt{peek)}}
-%         \end{subfigure}%
-%         \begin{subfigure}{.5\textwidth}
-%             \centering
-%             \includegraphics[scale=0.45]{BadInterleaving_2.png}
-%             \captionsetup{labelformat=empty}
-%             \caption{Thread 2}
-%         \end{subfigure}
-%     \end{figure}
-% \end{example}
-% A \textit{data race} is a specific kind of race condition that is better described as a ''simultaneous access error'', although nobody uses that term. There are two kinds of data races:
-% \begin{itemize}
-%     \item When one thread might read an object field at the same moment that another thread writes the same field.
-%     \item When one thread might write an object field at the same moment that another thread also writes the same field.
-% \end{itemize}
-% \noindent Notice it is not an error for two threads to both read the same object field at the same time.\\[3mm]
-% Our programs must never have data races even if it looks like a data race would not cause an error - if our program has data races, the execution of your program is allowed to do very strange things: The exact behavior that the program is allowed to exhibit is usually defined in the memory model of a language, we'll get to the memory model of Java later.
-% \begin{example}
-%     Let's consider a very simple example.
-%     \begin{figure}[H]
-%         \centering
-%         \includegraphics[scale=0.45]{DataRace.png}
-%     \end{figure}
-%     Notice that \texttt{f} and \texttt{g} are not synchronized, leading to potential data races on fields \texttt{x} and \texttt{y}, Therefore, the assertion in \texttt{g} can fail. But there is no interleaving of operations that justifies the assertion failure, as can be seen through a proof by contradiction: \\[3mm]
-%     \quad Assume the assertion fails, meaning \texttt{!(b$>=$a)}. Then \texttt{a==1} and \texttt{b==0}. Since \texttt{a==1}, line B happened before line C. Since A must happen before B, C must happen before D, and ''happens before'' is a transitive relation, A must happen before D. But then \texttt{b==1} and the assertion holds.\\[3mm]
-%     There is nothing wrong with the proof except its assumption that we can reason in terms of ''all possible interleavings'' or that everything happens in certain orders. We can reason this way only if the program has no data races.
-% \end{example}
-%
-% \subsection{Other Models}
-% We've introduced a programming model of explicit threads with shared memory. This is, of course, not the only programming model for concurrent or parallel programming. Shared memory is often considered convenient because communication uses ''regular'' reads and writes of object fields. However, it's also considered error-prone because communication is implicit; it requires a deep understanding of the code/documentation to know which memory accesses are doing inter-thread communication and which are not. The definition of shared-memory programs is also much more subtle than many programmers think because of issues regarding data races, as discussed in the previous section.\\[3mm]
-% Three well-known, popular alternatives to shared memory are presented in the following. Note that different models are better suited for different problems. Models can be abstracted and freely built on top of each other or we can use multiple models in the same program (e.g. MPI with Java).\\[3mm]
-% \textit{Message-passing} is the natural alternative to shared memory. In this model, explicit threads do not share objects. For them to communicate, copies of data are exchanged as messages between processes. As objects are not shared between individual threads, the issue of threads wrongly updating fields does not occur. One does, however, have to keep track of the different data copies being passed around through messages. Message passing is especially fitting for processes which are far apart form each other, similar to sending an email, where a copy of the message is sent to the recipient.\\[3mm]
-% \textit{Dataflow} provides more structure than having ''a bunch of threads that communicate with each other however they want.'' Instead, the programmer uses primitives to create a directed acyclic graph. A node in the graph performs some computation using inputs that arrive on its incoming edges. This data is provided by other nodes along their outgoing edges. A node starts its computation when all of its inputs are available, something the implementation keeps track of automatically.\\[3mm]
-% \textit{Data parallelism} does not have explicit threads or nodes running different parts of the program at different times. Instead, it has primitives for parallelism that involve applying the same operation to different pieces of data at the same time. For example, you would have a primitive for applying some function to every element of an array. The implementation of this primitive would use parallelism rather than a sequential for-loop. Hence all the parallelism is done for you provided you can express your program using the available primitives.
-%
 \end{document}
